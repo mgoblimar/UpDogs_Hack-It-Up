@@ -1,16 +1,35 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useRouter, Redirect } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import type { Session } from '@supabase/supabase-js'
 
 export default function HomeScreen() {
   const router = useRouter()
   const reset = useBillStore((s) => s.reset)
+  const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
     reset()
-  }, [reset])
+
+    if (!isSupabaseConfigured) {
+      setSession(null)
+      return
+    }
+
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  // Still checking auth
+  if (session === undefined) return null
+
+  // Not signed in — redirect to sign-in
+  if (!session) return <Redirect href="/sign-in" />
 
   return (
     <SafeAreaView className="flex-1 bg-brand-orange">

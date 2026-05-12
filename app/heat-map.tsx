@@ -8,6 +8,8 @@ import {
   RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import WebView from 'react-native-webview'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useBillStore } from '@/store/billStore'
 
 interface CityRow {
@@ -20,6 +22,92 @@ interface CityRow {
 interface SubmitResult {
   ok: boolean
   message: string
+}
+
+// Coordinates for Philippine cities commonly appearing in Meralco coverage
+const CITY_COORDS: Record<string, [number, number]> = {
+  'Manila': [14.5995, 120.9842],
+  'Quezon City': [14.6760, 121.0437],
+  'Makati': [14.5547, 121.0244],
+  'Pasig': [14.5764, 121.0851],
+  'Taguig': [14.5176, 121.0509],
+  'Mandaluyong': [14.5794, 121.0359],
+  'Marikina': [14.6507, 121.1029],
+  'Caloocan': [14.6492, 120.9673],
+  'Malabon': [14.6625, 120.9570],
+  'Navotas': [14.6619, 120.9427],
+  'Valenzuela': [14.7011, 120.9830],
+  'Las Piñas': [14.4453, 120.9934],
+  'Muntinlupa': [14.4081, 121.0415],
+  'Parañaque': [14.4793, 121.0198],
+  'Pasay': [14.5378, 120.9974],
+  'San Juan': [14.6014, 121.0311],
+  'Pateros': [14.5446, 121.0680],
+  'Bacoor': [14.4624, 120.9645],
+  'Cavite City': [14.4791, 120.8977],
+  'Imus': [14.4297, 120.9367],
+  'Dasmariñas': [14.3294, 120.9367],
+  'General Trias': [14.3856, 120.8806],
+  'Antipolo': [14.6286, 121.1760],
+  'San Mateo': [14.6991, 121.1227],
+  'Rodriguez': [14.7421, 121.1153],
+  'Biñan': [14.3401, 121.0797],
+  'Santa Rosa': [14.3122, 121.1114],
+  'Calamba': [14.2117, 121.1653],
+  'Laguna': [14.2786, 121.4119],
+  'Bulacan': [14.7942, 120.8786],
+  'Meycauayan': [14.7353, 120.9606],
+  'Marilao': [14.7588, 120.9477],
+  'Obando': [14.7669, 120.9319],
+}
+
+const STATUS_COLORS = { low: '#22c55e', medium: '#eab308', high: '#ef4444' }
+
+const STATUS_CONFIG = {
+  low: { bg: 'bg-green-100', border: 'border-green-300', dot: 'bg-green-500', label: 'Mababa', text: 'text-green-700' },
+  medium: { bg: 'bg-yellow-100', border: 'border-yellow-300', dot: 'bg-yellow-500', label: 'Katamtaman', text: 'text-yellow-700' },
+  high: { bg: 'bg-red-100', border: 'border-red-300', dot: 'bg-red-500', label: 'Mataas', text: 'text-red-700' },
+}
+
+function buildLeafletHtml(rows: CityRow[], userCity: string | null): string {
+  const markers = rows
+    .filter((r) => CITY_COORDS[r.city])
+    .map((r) => {
+      const [lat, lng] = CITY_COORDS[r.city]
+      const color = STATUS_COLORS[r.status] ?? STATUS_COLORS.medium
+      const isUser = userCity?.toLowerCase().trim() === r.city.toLowerCase().trim()
+      const popup = `<b>${r.city}</b>${isUser ? ' 📍' : ''}<br>Avg: ₱${r.average_amount.toLocaleString()}<br>${r.report_count} report${r.report_count !== 1 ? 's' : ''}`
+      return `L.circleMarker([${lat},${lng}], {
+        radius: ${isUser ? 14 : 10},
+        fillColor: "${color}",
+        color: "${isUser ? '#F97316' : '#fff'}",
+        weight: ${isUser ? 3 : 2},
+        opacity: 1,
+        fillOpacity: 0.85
+      }).bindPopup("${popup}").addTo(map);`
+    })
+    .join('\n')
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body, #map { height: 100%; margin: 0; padding: 0; }
+  .leaflet-popup-content { font-family: sans-serif; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([14.55, 121.02], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  ${markers}
+</script>
+</body>
+</html>`
 }
 
 function kwh_range(kwh: number): string {
@@ -37,23 +125,13 @@ function amount_range(amount: number): string {
 }
 
 async function fetchHeatMap(): Promise<CityRow[]> {
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseKey) throw new Error('Supabase not configured')
-
-  const res = await fetch(
-    `${supabaseUrl}/rest/v1/city_heat_map?select=city,report_count,average_amount,status&order=average_amount.desc`,
-    {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-    }
-  )
-
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
-  return res.json()
+  if (!isSupabaseConfigured) throw new Error('Supabase not configured')
+  const { data, error } = await supabase
+    .from('city_heat_map')
+    .select('city, report_count, average_amount, status')
+    .order('average_amount', { ascending: false })
+  if (error) throw new Error(`Fetch failed: ${error.message}`)
+  return (data ?? []) as CityRow[]
 }
 
 async function submitReport(payload: {
@@ -62,35 +140,13 @@ async function submitReport(payload: {
   amount_range: string
   report_type: string
 }): Promise<SubmitResult> {
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseKey) return { ok: false, message: 'Supabase not configured' }
-
-  const res = await fetch(`${supabaseUrl}/rest/v1/community_reports`, {
-    method: 'POST',
-  headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
-    body: JSON.stringify(payload),
-  })
-
-  if (!res.ok) {
-    const err = await res.text()
-    console.error('[HeatMap] Submit error:', err)
+  if (!isSupabaseConfigured) return { ok: false, message: 'Supabase not configured' }
+  const { error } = await supabase.from('community_reports').insert(payload)
+  if (error) {
+    console.error('[HeatMap] Submit error:', error.message)
     return { ok: false, message: 'Hindi makapag-submit ngayon. Subukan ulit.' }
   }
-
   return { ok: true, message: 'Salamat! Na-share na ang iyong datos sa komunidad.' }
-}
-
-const STATUS_CONFIG = {
-  low: { bg: 'bg-green-100', border: 'border-green-300', dot: 'bg-green-500', label: 'Mababa', text: 'text-green-700' },
-  medium: { bg: 'bg-yellow-100', border: 'border-yellow-300', dot: 'bg-yellow-500', label: 'Katamtaman', text: 'text-yellow-700' },
-  high: { bg: 'bg-red-100', border: 'border-red-300', dot: 'bg-red-500', label: 'Mataas', text: 'text-red-700' },
 }
 
 export default function HeatMapScreen() {
@@ -106,6 +162,7 @@ export default function HeatMapScreen() {
   const [submitMsg, setSubmitMsg] = useState<string | null>(null)
 
   const hasOwnBill = !!(billInput?.city && billInput.kwh && billInput.totalAmount && verdict)
+  const userCity = billInput?.city ?? null
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -142,10 +199,70 @@ export default function HeatMapScreen() {
     setSubmitting(false)
   }
 
-  const userCity = billInput?.city ?? null
+  const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
+  const mapHtml = buildLeafletHtml(rows, userCity)
 
   return (
     <SafeAreaView className="flex-1 bg-stone-50" edges={['bottom']}>
+
+      {/* Tab switcher */}
+      <View className="flex-row bg-white border-b border-stone-100">
+        {(['map', 'list'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            className={`flex-1 py-3 items-center border-b-2 ${
+              activeTab === tab ? 'border-brand-orange' : 'border-transparent'
+            }`}
+            activeOpacity={0.7}
+          >
+            <Text className={`text-sm font-semibold ${
+              activeTab === tab ? 'text-brand-orange' : 'text-stone-400'
+            }`}>
+              {tab === 'map' ? '🗺️  Mapa' : '📋  Listahan'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Full-screen map tab */}
+      {activeTab === 'map' && (
+        <View className="flex-1 bg-stone-200">
+          {loading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator color="#F97316" size="large" />
+              <Text className="text-stone-400 text-sm mt-3">Kino-load ang mapa...</Text>
+            </View>
+          ) : (
+            <WebView
+              source={{ html: mapHtml }}
+              style={{ flex: 1 }}
+              scrollEnabled={false}
+              originWhitelist={['*']}
+              javaScriptEnabled
+            />
+          )}
+          {/* Legend overlay */}
+          <View className="absolute bottom-4 right-4 bg-white/95 rounded-2xl px-4 py-3 flex-row gap-4 shadow-sm">
+            {(['low', 'medium', 'high'] as const).map((s) => (
+              <View key={s} className="flex-row items-center gap-1.5">
+                <View className={`w-3 h-3 rounded-full ${STATUS_CONFIG[s].dot}`} />
+                <Text className="text-stone-600 text-xs font-medium">{STATUS_CONFIG[s].label}</Text>
+              </View>
+            ))}
+          </View>
+          {/* Report count badge */}
+          {rows.length > 0 && (
+            <View className="absolute top-4 left-4 bg-white/95 rounded-2xl px-3 py-2 shadow-sm">
+              <Text className="text-stone-700 text-xs font-semibold">{rows.length} lungsod</Text>
+              <Text className="text-stone-400 text-xs">{rows.reduce((a, r) => a + r.report_count, 0)} reports</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* List tab */}
+      {activeTab === 'list' && (
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
@@ -153,24 +270,6 @@ export default function HeatMapScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor="#F97316" />
         }
       >
-        {/* Header */}
-        <View className="bg-brand-orange px-6 pt-6 pb-8">
-          <Text className="text-white text-2xl font-bold">Community Heat Map 🏘️</Text>
-          <Text className="text-white/80 text-sm mt-1">
-            Tingnan kung gaano ka-mataas ang average bill sa bawat lungsod sa Metro Manila
-          </Text>
-        </View>
-
-        {/* Legend */}
-        <View className="mx-6 -mt-4 bg-white rounded-2xl p-4 shadow-sm flex-row justify-around">
-          {(['low', 'medium', 'high'] as const).map((s) => (
-            <View key={s} className="items-center gap-1">
-              <View className={`w-4 h-4 rounded-full ${STATUS_CONFIG[s].dot}`} />
-              <Text className="text-stone-500 text-xs">{STATUS_CONFIG[s].label}</Text>
-            </View>
-          ))}
-        </View>
-
         {/* Submit own bill */}
         {hasOwnBill && !submitted && (
           <View className="mx-6 mt-4 bg-brand-orange/10 border border-brand-orange/30 rounded-2xl p-4">
@@ -238,12 +337,11 @@ export default function HeatMapScreen() {
             {rows.map((row, i) => {
               const cfg = STATUS_CONFIG[row.status] ?? STATUS_CONFIG.medium
               const isUserCity = userCity?.toLowerCase().trim() === row.city.toLowerCase().trim()
+              const hasCoords = !!CITY_COORDS[row.city]
               return (
                 <View
                   key={row.city}
-                  className={`rounded-2xl p-4 border ${cfg.bg} ${cfg.border} ${
-                    isUserCity ? 'border-2' : 'border'
-                  }`}
+                  className={`rounded-2xl p-4 ${cfg.bg} ${isUserCity ? 'border-2 border-brand-orange' : `border ${cfg.border}`}`}
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-2 flex-1">
@@ -252,6 +350,7 @@ export default function HeatMapScreen() {
                       <Text className={`font-bold text-sm flex-1 ${isUserCity ? 'text-brand-orange' : 'text-stone-800'}`}>
                         {row.city}
                         {isUserCity ? ' 📍' : ''}
+                        {!hasCoords ? ' *' : ''}
                       </Text>
                     </View>
                     <View className="items-end">
@@ -273,8 +372,11 @@ export default function HeatMapScreen() {
 
         <Text className="text-stone-300 text-xs text-center mt-6 px-6">
           Ang datos ay anonymous at aggregated. Walang personal na impormasyon ang naka-store.
+          {'\n'}* Hindi pa nakalagay sa mapa ang lungsod na ito.
         </Text>
       </ScrollView>
+      )}
+
     </SafeAreaView>
   )
 }

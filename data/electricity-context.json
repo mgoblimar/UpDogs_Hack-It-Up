@@ -1,0 +1,169 @@
+{
+  "lastUpdated": "2026-04",
+  "sources": [
+    { "name": "Meralco Rate Updates — Inquirer", "url": "https://business.inquirer.net/tag/meralco" },
+    { "name": "ERC Rate Decisions — BusinessWorld", "url": "https://www.bworldonline.com/tag/energy-regulatory-commission" },
+    { "name": "Malampaya Gas Supply — Inquirer", "url": "https://business.inquirer.net/tag/malampaya" },
+    { "name": "WESM Spot Prices — BusinessWorld", "url": "https://www.bworldonline.com/tag/wesm" },
+    { "name": "NGCP Grid Alerts — Inquirer", "url": "https://business.inquirer.net/tag/ngcp" },
+    { "name": "El Niño Power Impact — Inquirer", "url": "https://business.inquirer.net/tag/el-nino" },
+    { "name": "Philippine Daily Inquirer Energy", "url": "https://business.inquirer.net/category/energy" },
+    { "name": "BusinessWorld Energy Coverage", "url": "https://www.bworldonline.com/tag/energy" }
+  ],
+  "historicalRates": [
+    {
+      "month": "2025-01",
+      "overallRate": 13.2154,
+      "generationCharge": 7.6821,
+      "note": "Post-holiday demand normalization. Coal prices eased after Q4 2024 peak. WESM spot prices relatively stable."
+    },
+    {
+      "month": "2025-02",
+      "overallRate": 13.0892,
+      "generationCharge": 7.5643,
+      "note": "Slight decrease. Weather conditions favorable for hydro generation. Malampaya supply adequate for the month."
+    },
+    {
+      "month": "2025-03",
+      "overallRate": 13.4217,
+      "generationCharge": 7.8912,
+      "note": "Start of summer. Demand increase from aircon usage begins. WESM prices start climbing as hydro output drops."
+    },
+    {
+      "month": "2025-04",
+      "overallRate": 14.1085,
+      "generationCharge": 8.2341,
+      "note": "Peak summer month. El Niño residual effects. High demand + low hydro = expensive WESM spot purchases. Red alert declared in Luzon grid on several days."
+    },
+    {
+      "month": "2025-05",
+      "overallRate": 14.2903,
+      "generationCharge": 8.3102,
+      "note": "Still elevated. Continued high demand. Malampaya gas field output declining — forcing more expensive LNG and coal plants to run. DOE declared yellow alert warnings."
+    },
+    {
+      "month": "2025-06",
+      "overallRate": 13.8754,
+      "generationCharge": 7.9823,
+      "note": "Rainy season begins. Hydro output improves. Demand drops as aircon use decreases. Some relief in WESM prices."
+    },
+    {
+      "month": "2025-07",
+      "overallRate": 13.5621,
+      "generationCharge": 7.7234,
+      "note": "Continued improvement. Typhoon season brings uncertainty but also hydro benefits. Coal prices globally softened."
+    },
+    {
+      "month": "2025-08",
+      "overallRate": 13.4102,
+      "generationCharge": 7.6012,
+      "note": "Stable month. No major supply disruptions. WESM prices at moderate levels. Distribution charge still frozen by ERC since August 2022."
+    },
+    {
+      "month": "2025-09",
+      "overallRate": 13.6789,
+      "generationCharge": 7.8234,
+      "note": "Slight uptick. End of rainy season transition. Some coal plants underwent scheduled maintenance, temporarily reducing supply."
+    },
+    {
+      "month": "2025-10",
+      "overallRate": 13.7834,
+      "generationCharge": 7.9102,
+      "note": "Ber months begin. Increased commercial and residential consumption. Holiday season ramp-up in manufacturing."
+    },
+    {
+      "month": "2025-11",
+      "overallRate": 13.9241,
+      "generationCharge": 8.0412,
+      "note": "Rising demand from holiday season. Coal prices uptick globally due to winter demand in Europe and Asia affecting LNG spot prices."
+    },
+    {
+      "month": "2025-12",
+      "overallRate": 14.1023,
+      "generationCharge": 8.1892,
+      "note": "Peak holiday demand. Christmas and New Year consumption surge. Several peak hours triggered expensive WESM spot purchases."
+    },
+    {
+      "month": "2026-01",
+      "overallRate": 13.9876,
+      "generationCharge": 8.1023,
+      "note": "Post-holiday correction. Demand normalizes after New Year. However Malampaya supply concerns persist — gas field now at significantly reduced capacity."
+    },
+    {
+      "month": "2026-02",
+      "overallRate": 14.0234,
+      "generationCharge": 8.1534,
+      "note": "Slight increase. Malampaya supply disruption reported. Plants that relied on Malampaya gas now switching to more expensive alternatives (LNG imports, coal)."
+    },
+    {
+      "month": "2026-03",
+      "overallRate": 14.1892,
+      "generationCharge": 8.2734,
+      "note": "Pre-summer demand rise begins. Malampaya situation worsens. DOE advisory on tight supply conditions for Luzon grid. WESM prices elevated."
+    },
+    {
+      "month": "2026-04",
+      "overallRate": 14.3496,
+      "generationCharge": 8.3864,
+      "note": "ERC-cleared April 2026 rate. Peak summer. Malampaya output at critical lows. High WESM spot market prices. El Niño-like conditions reducing hydro output. Multiple red alert declarations in Luzon."
+    }
+  ],
+  "keyIssues": [
+    {
+      "issue": "Malampaya Natural Gas Field Depletion",
+      "impact": "HIGH",
+      "description": "Ang Malampaya natural gas field sa Palawan ay ang pangunahing source ng natural gas para sa mga power plant sa Luzon. Sa 2026, ang output nito ay nag-decline ng malaki kumpara sa nakaraang dekada. Ang mga power plant na dati ay gumagamit ng murang Malampaya gas ay kailangan na ngayong gumamit ng mas mahal na imported LNG (Liquefied Natural Gas) o coal. Ito ang isa sa pinakamahalagang dahilan ng patuloy na pagtaas ng generation charge.",
+      "source": "DOE Malampaya Field Production Reports 2025-2026"
+    },
+    {
+      "issue": "El Niño at Summer Peak Demand",
+      "impact": "HIGH",
+      "description": "Tuwing tag-araw (Marso-Hunyo), tumataas ang demand para sa kuryente dahil sa paggamit ng aircon. Sa El Niño years, mas mainit ang panahon kaya mas mataas ang demand. Sabay pa rito, bumababa ang output ng mga hydroelectric power plant dahil sa kakulangan ng tubig sa mga dam. Ang kombinasyon ng mataas na demand at mababang supply ay nagpapataas ng presyo sa WESM (Wholesale Electricity Spot Market).",
+      "source": "PAGASA El Niño Advisories, NGCP Grid Situation Reports 2025-2026"
+    },
+    {
+      "issue": "WESM (Wholesale Electricity Spot Market) Price Spikes",
+      "impact": "HIGH",
+      "description": "Ang WESM ang palengke kung saan nagbibili ng kuryente ang mga distribution utility tulad ng Meralco kapag kulang ang supply mula sa kanilang contracted power plants. Kapag mataas ang demand at mababa ang supply, maaaring umabot ang WESM price sa ₱62/kWh o mas mataas. Ang mga ganitong spot purchases ay nagiging bahagi ng generation charge ng consumers.",
+      "source": "WESM Monthly Market Assessment Reports 2025-2026"
+    },
+    {
+      "issue": "Global Coal Price Fluctuations",
+      "impact": "MEDIUM",
+      "description": "Ang Pilipinas ay umaasa sa coal para sa malaking bahagi ng kapangyarihang elektrikal nito. Ang presyo ng coal sa pandaigdigang merkado ay nag-fluctuate dahil sa demand mula sa China, India, at Europe, pati na rin ang mga supply disruptions sa mga coal-exporting countries. Kapag mahal ang coal globally, nagiging mahal din ang kuryente sa Pilipinas.",
+      "source": "DOE Energy Statistics, World Bank Commodity Price Reports"
+    },
+    {
+      "issue": "Transmission Constraints at Grid Issues",
+      "impact": "MEDIUM",
+      "description": "Ang NGCP (National Grid Corporation of the Philippines) ang nagpapatakbo ng national transmission grid. Ang ilang bahagi ng grid ay may lumang imprastraktura na nagdudulot ng bottlenecks, lalo na sa panahon ng mataas na demand. Ang mga constraints na ito ay nagpipigil sa full dispatch ng available generation capacity.",
+      "source": "NGCP Grid Operations Reports, ERC Transmission Performance Reports"
+    },
+    {
+      "issue": "Distribution Charge Freeze",
+      "impact": "LOW",
+      "description": "Ang distribution charge ng Meralco ay naka-freeze ng ERC simula Agosto 2022 sa halagang ₱2.76/kWh bilang consumer protection measure. Hindi ito maaaring itaas ng Meralco nang walang bagong ERC rate case approval. Ito ay isang positibong aspeto para sa consumers.",
+      "source": "ERC Order on Meralco Distribution Rate Freeze, August 2022"
+    },
+    {
+      "issue": "Renewable Energy Transition (FiT-All)",
+      "impact": "LOW",
+      "description": "Ang FiT-All (Feed-in Tariff Allowance) ay isang maliit na charge sa bawat kWh na ginagamit para suportahan ang renewable energy developers (solar, wind, hydro, biomass). Habang lumalaki ang renewable energy sector, maaaring mag-adjust ang FiT-All rate. Sa matagalan, dapat magpababa ng presyo ang mas maraming renewable energy sa sistema.",
+      "source": "ERC FiT-All Rate Determination Orders, DOE Renewable Energy Reports"
+    }
+  ],
+  "consumerRights": [
+    "Karapatan sa malinaw at tumpak na billing (RA 7832)",
+    "Karapatan magreklamo sa ERC nang libre (ERC Resolution 09-2006)",
+    "Karapatan sa lifeline rate para sa 0-100 kWh consumers",
+    "Karapatan sa 30-day notice bago ang disconnection",
+    "Karapatan sa refund kung napatunayan ang overbilling",
+    "Karapatan sa estimated bill na hindi hihigit sa 2 consecutive months",
+    "Karapatan sa meter testing kung may suspetsa sa mali ang reading"
+  ],
+  "rateContext": {
+    "whyRatesVary": "Ang generation charge ang pinakamalaking bahagi ng bill at ito ang pinaka-volatile. Nagbabago ito bawat buwan depende sa fuel costs, WESM prices, at supply-demand balance. Ang ibang charges tulad ng distribution at supply ay mas stable.",
+    "howMeralcoBuyspower": "Ang Meralco ay may power supply agreements (PSA) sa iba't ibang power plants. Kapag kulang ang supply mula sa mga contracted plants, kailangan nilang bumili sa WESM sa mas mataas na presyo. Ang dagdag na gastos ay idinaragdag sa generation charge ng consumers.",
+    "ercRole": "Ang ERC ang nagse-set ng maximum rates para protektahan ang consumers. Bago mag-implement ng rate adjustment ang Meralco, kailangan nito ng ERC clearance. Ang April 2026 overall rate na ₱14.3496/kWh ay ERC-cleared."
+  }
+}

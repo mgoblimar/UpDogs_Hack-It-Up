@@ -3,6 +3,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -101,20 +102,20 @@ export default function VerdictScreen() {
       <Text className="text-stone-800 text-lg font-bold px-6 mt-6 mb-3">Ano ang Gagawin Mo?</Text>
 
       <View className="px-6 gap-3">
-        {isOvercharged && (
+        {(isOvercharged || isHigh) && (
           <>
             <ActionCard
               icon="📋"
               title="Mag-file ng Reklamo sa ERC"
               description="Ang ERC ang nagre-regulate ng electricity rates. Libre ang pag-file ng reklamo."
               onPress={() => router.push('/erc-complaint')}
-              highlight
+              highlight={isOvercharged}
             />
             <ActionCard
               icon="📱"
               title="Tawagan ang Meralco"
               description="Hotline: 16211 — Humingi ng bill explanation o formal dispute."
-              onPress={() => {}}
+              onPress={() => Linking.openURL('tel:16211')}
             />
           </>
         )}
@@ -136,6 +137,20 @@ export default function VerdictScreen() {
             onPress={() => router.push('/faq')}
           />
         )}
+
+        <ActionCard
+          icon="⚡"
+          title="Lifeline Rate Checker"
+          description="Alamin kung qualified ka sa government discount para sa 0–100 kWh consumers."
+          onPress={() => router.push('/lifeline-checker')}
+        />
+
+        <ActionCard
+          icon="🏛️"
+          title="Report sa DTI"
+          description="May sub-meter abuse ang landlord mo? Alamin ang iyong karapatan."
+          onPress={() => router.push('/dti-report')}
+        />
 
         <ActionCard
           icon="🏘️"
