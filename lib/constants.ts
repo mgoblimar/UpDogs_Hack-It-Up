@@ -1,16 +1,17 @@
 import type { ERCRates } from '@/types/rates'
 
-// ERC-approved maximum rates (May 2026)
-// Source: ERC Resolution No. 14 Series of 2025
+// ERC-cleared Meralco rates (April 2026)
+// Source: meralco.com.ph official rate schedule + ERC clearance
+// Overall residential rate April 2026: ₱14.3496/kWh
 export const ERC_RATES: ERCRates = {
-  generationMax: 7.50,
+  generationMax: 8.3864,
   transmissionMax: 0.95,
-  systemLossMax: 0.65,   // 8.5% of generation charge (approx)
-  distributionMax: 2.10,
+  systemLossMax: 0.78,   // ERC cap is 8.5% of system load; Meralco actual was 4.97%
+  distributionMax: 2.76, // Frozen by ERC since August 2022
   supplyMax: 0.45,
   meteringMax: 0.25,
-  overallMax: 11.90,
-  updatedAt: '2026-05',
+  overallMax: 14.3496,   // Official ERC-cleared April 2026 residential rate
+  updatedAt: '2026-04',
 }
 
 export const METRO_MANILA_CITIES = [
@@ -47,14 +48,14 @@ export const CHARGE_LABELS: Record<string, string> = {
 }
 
 export const CHARGE_EXPLANATIONS: Record<string, string> = {
-  generationCharge: 'Bayad sa power plant na gumawa ng kuryente mo.',
-  transmissionCharge: 'Bayad sa pagdadala ng kuryente mula power plant papunta sa iyong lugar.',
+  generationCharge: 'Bayad sa power plant na gumawa ng kuryente mo. Ito ang pinakamalaking bahagi ng bill mo.',
+  transmissionCharge: 'Bayad sa NGCP para sa pagdadala ng kuryente mula power plant papunta sa iyong lugar.',
   systemLossCharge: 'Bahagi ng kuryenteng nawala sa linya habang dinadala. Max 8.5% lang ang legal.',
-  distributionCharge: 'Bayad sa Meralco para sa lokal na distribution network.',
-  supplyCharge: 'Bayad sa serbisyo ng billing at customer service ng Meralco.',
-  meteringCharge: 'Bayad sa electric meter na naka-install sa iyong bahay.',
-  subsidies: 'Bawas mula sa gobyerno para sa mga low-income household. Negative ito.',
-  taxes: 'VAT at iba pang buwis na kinukuha ng gobyerno.',
+  distributionCharge: 'Bayad sa Meralco para sa lokal na linya, metering, at supply service.',
+  subsidies: 'Bawas mula sa gobyerno para sa mga low-income household (lifeline subsidy).',
+  universalCharges: 'Bayad para sa mga stranded costs ng NPC at missionary electrification.',
+  fitAll: 'Feed-in Tariff para suportahan ang renewable energy sources tulad ng solar at wind.',
+  taxes: 'Government taxes — 12% VAT sa karamihan ng charges. Mandatoryo, hindi kontrolado ng Meralco.',
 }
 
 export const STORAGE_KEYS = {

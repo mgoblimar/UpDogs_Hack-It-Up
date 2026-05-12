@@ -10,7 +10,7 @@ function getStatus(ratePerKwh: number, maxRate: number): VerdictStatus {
 
 export function analyzeBill(input: BillInput, rates: ERCRates = ERC_RATES): VerdictResult {
   const { kwh, totalAmount } = input
-  const userRatePerKwh = totalAmount / kwh
+  const userRatePerKwh = input.ratePerKwh ?? totalAmount / kwh
 
   const lineItems: LineItem[] = []
 
@@ -62,13 +62,33 @@ export function analyzeBill(input: BillInput, rates: ERCRates = ERC_RATES): Verd
     })
   }
 
-  if (input.subsidies !== undefined && input.subsidies < 0) {
+  if (input.subsidies !== undefined && input.subsidies > 0) {
     lineItems.push({
       key: 'subsidies',
       label: 'Subsidies',
-      amount: input.subsidies,
+      amount: -input.subsidies,
       status: 'normal',
       explanation: CHARGE_EXPLANATIONS.subsidies,
+    })
+  }
+
+  if (input.universalCharges !== undefined) {
+    lineItems.push({
+      key: 'universalCharges',
+      label: 'Universal Charges',
+      amount: input.universalCharges,
+      status: 'normal',
+      explanation: CHARGE_EXPLANATIONS.universalCharges,
+    })
+  }
+
+  if (input.fitAll !== undefined) {
+    lineItems.push({
+      key: 'fitAll',
+      label: 'FiT-All (Renewable)',
+      amount: input.fitAll,
+      status: 'normal',
+      explanation: CHARGE_EXPLANATIONS.fitAll,
     })
   }
 
@@ -90,9 +110,9 @@ export function analyzeBill(input: BillInput, rates: ERCRates = ERC_RATES): Verd
     status = 'overcharged'
   } else if (userRatePerKwh > rates.overallMax) {
     status = 'high'
-  } else if (lineItems.some(item => item.status === 'overcharged')) {
+  } else if (lineItems.some((item) => item.status === 'overcharged')) {
     status = 'overcharged'
-  } else if (lineItems.some(item => item.status === 'high')) {
+  } else if (lineItems.some((item) => item.status === 'high')) {
     status = 'high'
   }
 

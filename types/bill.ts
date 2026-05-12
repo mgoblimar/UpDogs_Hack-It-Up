@@ -10,17 +10,18 @@ export interface LineItem {
 }
 
 export interface BillInput {
-  totalAmount: number
+  totalAmount: number       // "Charges for this billing period" (NOT Total Amount Due)
   kwh: number
   city: string
+  ratePerKwh?: number       // "Your rate this month ₱X.XX per kWh"
   generationCharge?: number
   transmissionCharge?: number
   systemLossCharge?: number
   distributionCharge?: number
-  supplyCharge?: number
-  meteringCharge?: number
   subsidies?: number
-  taxes?: number
+  universalCharges?: number
+  fitAll?: number           // FiT-All (Renewable)
+  taxes?: number            // Government Taxes (VAT)
   billingMonth?: string
 }
 

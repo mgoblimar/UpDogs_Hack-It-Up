@@ -4,7 +4,7 @@
 > Complete phases in order — you can demo after every phase ends.
 
 **Project:** KuryenteKo  
-**Last updated:** 2026-05-12 (Phase 0 + Phase 1 complete)
+**Last updated:** 2026-05-12 (Phase 0 + Phase 1 + Phase 2 complete)
 
 ---
 
@@ -80,34 +80,44 @@
 
 ---
 
-## Phase 2: Bill Decoder + Verdict
+## Phase 2: Bill Decoder + Verdict ✅
 **Goal:** User sees their bill explained and gets a clear 🟢/🔴 verdict.  
 **Demo checkpoint:** Input any bill → see decoded charges → see verdict with peso amount.
 
 ### Bill Decoder
 
-- [ ] Build Bill Decoder screen listing all extracted/entered charges
-- [ ] Map each charge to a plain Taglish explanation (one sentence each):
+- [x] Build Bill Decoder screen (`app/bill-decoder.tsx`) listing all charges
+- [x] Map each charge to a plain Taglish explanation:
   - Generation Charge
   - Transmission Charge
   - System Loss Charge
-  - Distribution Charge
-  - Supply Charge
-  - Metering Charge
-  - Subsidies (negative)
-  - Taxes (VAT, franchise tax)
-- [ ] Color code each line item: 🟢 within limit / 🟡 near limit / 🔴 over limit
-- [ ] Add ℹ️ info tap on each charge for expanded explanation
+  - Distribution Charge (includes metering + supply sub-items)
+  - Subsidies
+  - Universal Charges
+  - FiT-All (Renewable)
+  - Taxes (VAT)
+- [x] Color code each line item: ✅ within limit / ⚠️ near limit / 🚨 over limit
+- [x] Tap any charge card to expand Taglish explanation
+- [x] Summary row: Total Bill / kWh / Rate per kWh
 
 ### Overcharge Detector
 
-- [ ] Hardcode current ERC-approved maximum rates per charge type
-- [ ] Build detection logic: compare user's per-kWh rate vs ERC maximum
-- [ ] Calculate exact peso overcharge amount
-- [ ] Build Verdict screen:
-  - 🟢 NORMAL — show average comparison + one saving tip
-  - 🟡 MEDYO MATAAS — show which charge is high + possible reason
-  - 🔴 SOBRANG TAAS — show exact overcharge amount in large text
+- [x] ERC-approved maximum rates in `lib/constants.ts` (May 2026)
+- [x] Detection logic in `services/billAnalysis.ts` — compares per-kWh rate vs ERC max
+- [x] Uses `ratePerKwh` directly from bill if OCR extracted it (more accurate)
+- [x] Calculates exact peso overcharge amount
+- [x] Verdict screen (`app/verdict.tsx`):
+  - ✅ NORMAL — action tips + links to heat map and AI chat
+  - ⚠️ MEDYO MATAAS — monitor next bill prompt
+  - 🚨 NA-OVERCHARGE — exact overcharge amount + ERC complaint CTA
+
+### Also completed
+
+- [x] Updated OCR prompt — now extracts `ratePerKwh`, `universalCharges`, `fitAll`
+- [x] Fixed `totalAmount` extraction — now grabs "Charges for this billing period" not "Total Amount Due"
+- [x] Updated `types/bill.ts` — added `ratePerKwh`, `universalCharges`, `fitAll` fields
+- [x] Updated scanner confirm screen — shows all new extracted fields
+- [x] Page 1 of Meralco bill is sufficient for full analysis (no Page 2 needed)
 
 ---
 
@@ -251,3 +261,4 @@
 
 <!-- ✅ Phase 0: Setup — completed 2026-05-12 (manual Supabase/EAS steps still pending) -->
 <!-- ✅ Phase 1: Input Screens — completed 2026-05-12 -->
+<!-- ✅ Phase 2: Bill Decoder + Verdict — completed 2026-05-12 -->

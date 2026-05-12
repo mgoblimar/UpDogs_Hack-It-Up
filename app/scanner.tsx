@@ -4,10 +4,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   ScrollView,
   TextInput,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
@@ -48,6 +48,7 @@ export default function ScannerScreen() {
       setScanState('confirm')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Hindi ma-scan ang bill. Subukan ang manual input.'
+      console.error('[OCR Error]', err)
       setErrorMsg(msg)
       setScanState('error')
     }
@@ -103,7 +104,7 @@ export default function ScannerScreen() {
         <Text className="text-stone-500 text-sm mb-6">I-edit kung mali ang na-extract mula sa iyong bill.</Text>
 
         <ConfirmField
-          label="Total Bill Amount (₱)"
+          label="Charges for this Billing Period (₱)"
           value={extracted.totalAmount?.toString() ?? ''}
           prefix="₱"
           onChange={(v) => setExtracted({ ...extracted, totalAmount: parseFloat(v) || 0 })}
@@ -114,6 +115,14 @@ export default function ScannerScreen() {
           suffix="kWh"
           onChange={(v) => setExtracted({ ...extracted, kwh: parseFloat(v) || 0 })}
         />
+        {extracted.ratePerKwh !== undefined && (
+          <ConfirmField
+            label="Rate this Month (₱/kWh)"
+            value={extracted.ratePerKwh.toString()}
+            prefix="₱"
+            onChange={(v) => setExtracted({ ...extracted, ratePerKwh: parseFloat(v) || 0 })}
+          />
+        )}
         {extracted.generationCharge !== undefined && (
           <ConfirmField
             label="Generation Charge (₱)"
@@ -136,6 +145,22 @@ export default function ScannerScreen() {
             value={extracted.systemLossCharge.toString()}
             prefix="₱"
             onChange={(v) => setExtracted({ ...extracted, systemLossCharge: parseFloat(v) || 0 })}
+          />
+        )}
+        {extracted.distributionCharge !== undefined && (
+          <ConfirmField
+            label="Distribution Charge (₱)"
+            value={extracted.distributionCharge.toString()}
+            prefix="₱"
+            onChange={(v) => setExtracted({ ...extracted, distributionCharge: parseFloat(v) || 0 })}
+          />
+        )}
+        {extracted.taxes !== undefined && (
+          <ConfirmField
+            label="Government Taxes / VAT (₱)"
+            value={extracted.taxes.toString()}
+            prefix="₱"
+            onChange={(v) => setExtracted({ ...extracted, taxes: parseFloat(v) || 0 })}
           />
         )}
 
