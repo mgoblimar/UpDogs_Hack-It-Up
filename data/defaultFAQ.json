@@ -1,0 +1,92 @@
+[
+  {
+    "id": "1",
+    "question": "Ano ang generation charge?",
+    "answer": "Ito ang pinakamalaking bahagi ng iyong bill — ang bayad sa power plant na gumawa ng kuryente mo. Karaniwang 50–55% ng iyong total bill. Legal ito, pero may maximum rate ang ERC.",
+    "category": "generation"
+  },
+  {
+    "id": "2",
+    "question": "Ano ang transmission charge?",
+    "answer": "Bayad sa NGCP (National Grid Corporation) para sa pagdadala ng kuryente mula sa power plant papunta sa inyong lugar. Hindi ito kontrolado ng Meralco.",
+    "category": "transmission"
+  },
+  {
+    "id": "3",
+    "question": "Ano ang system loss charge?",
+    "answer": "Ito ang kuryenteng nawawala sa linya habang dinadala sa inyong bahay. Legal ito, PERO 8.5% lang ang maximum na pwedeng singilin sa iyo. Kung higit sa 8.5%, pwede kang magreklamo sa ERC.",
+    "category": "system_loss"
+  },
+  {
+    "id": "4",
+    "question": "Pwede ba akong magreklamo kahit hindi pa ako bayad?",
+    "answer": "Oo, pwede. Ang pagreklamo sa ERC ay karapatan mo bilang consumer kahit may natitirang bayad. Huwag hayaang pigilan ka ng utang na kuryente sa pag-file ng reklamo tungkol sa overcharging.",
+    "category": "complaint"
+  },
+  {
+    "id": "5",
+    "question": "Sino ang may karapatang sa lifeline rate?",
+    "answer": "Ang mga residential household na gumagamit ng 0–100 kWh bawat buwan, ang tinitirhan ay pangunahing tirahan, at walang ibang kuryenteng koneksyon. Kung ikaw ay qualified, may diskwento ka sa bawat kWh na ginagamit mo.",
+    "category": "lifeline"
+  },
+  {
+    "id": "6",
+    "question": "Paano malalaman kung sub-meter abuse ang landlord ko?",
+    "answer": "Hanapin ang kasalukuyang Meralco rate sa iyong area (makikita sa iyong bill o sa Meralco website). Kung ang kinukuha ng landlord mo ay mas mataas pa sa rate ng Meralco bawat kWh, sub-meter abuse na iyon. Pwede kang magreklamo sa DTI.",
+    "category": "complaint"
+  },
+  {
+    "id": "7",
+    "question": "Bakit tumaas ang bill ko ngayong summer?",
+    "answer": "Normal na tumataas ang bill sa Abril–Hunyo dahil sa El Niño at peak demand. Mas mainit ang panahon kaya mas maraming gumagamit ng aircon. Dagdag pa rito, mababa ang supply ng tubig sa mga hydroelectric power plant sa tag-tuyot, kaya mas mahal ang kuryente.",
+    "category": "general"
+  },
+  {
+    "id": "8",
+    "question": "Ano ang Malampaya at bakit nakakaapekto sa aking bill?",
+    "answer": "Ang Malampaya ay isang gas field sa Palawan na nagbibigay ng natural gas sa mga power plant. Kapag bumaba ang supply nito, kailangan pang bumili ng mas mahal na alternatibong fuel. Ang dagdag na gastos ay napupunta sa iyong generation charge.",
+    "category": "general"
+  },
+  {
+    "id": "9",
+    "question": "Saan ako magreklamo tungkol sa mataas na bill?",
+    "answer": "Para sa overcharging ng Meralco o electric coop: magreklamo sa ERC (Energy Regulatory Commission). Para sa sub-meter abuse ng landlord: magreklamo sa DTI (Department of Trade and Industry). Pwede ring direkta sa Meralco hotline: 16211.",
+    "category": "complaint"
+  },
+  {
+    "id": "10",
+    "question": "Ano ang distribution charge?",
+    "answer": "Bayad ito para sa lokal na distribution network ng Meralco — ang mga poste, kawad, at transformer sa inyong barangay na nagdadala ng kuryente papunta sa inyong bahay mula sa substation.",
+    "category": "general"
+  },
+  {
+    "id": "11",
+    "question": "Pwede bang i-dispute ang bill ko?",
+    "answer": "Oo. Makipag-ugnayan muna sa Meralco hotline (16211) para sa formal dispute. Kung hindi maayos, mag-file ng reklamo sa ERC. May karapatan kang humiling ng rebate o adjustment kung napatunayan na nag-overbill sila.",
+    "category": "complaint"
+  },
+  {
+    "id": "12",
+    "question": "Ano ang supply charge at metering charge?",
+    "answer": "Ang supply charge ay bayad sa serbisyo ng billing at customer support ng Meralco. Ang metering charge ay bayad sa electric meter na naka-install sa inyong bahay. Pareho itong maliit na halaga kumpara sa generation charge.",
+    "category": "general"
+  },
+  {
+    "id": "13",
+    "question": "Paano mababawasan ang aking bill?",
+    "answer": "Ang pinakamabisang paraan: (1) Gamitin ang inverter aircon imbes na non-inverter — nakakatipid ng hanggang 40%. (2) Palitan ang lumang ref ng energy-efficient model. (3) Gumamit ng LED bulbs. (4) I-unplug ang mga appliance kapag hindi ginagamit — may 'phantom load' ang maraming gadget.",
+    "category": "general"
+  },
+  {
+    "id": "14",
+    "question": "Ano ang VAT sa kuryente?",
+    "answer": "12% VAT ang kinukuha ng gobyerno sa halos lahat ng singil sa iyong bill. Ito ay mandatoryo at hindi ito mababago ng Meralco. Makikita ito bilang 'Taxes' sa iyong bill.",
+    "category": "general"
+  },
+  {
+    "id": "15",
+    "question": "Ano ang Senior Citizen discount sa kuryente?",
+    "answer": "Ang mga senior citizen na nagmamay-ari ng residential account ay may karapatang sa 5% discount sa kanilang monthly electricity bill. Pumunta sa pinakamalapit na Meralco business center na may Senior Citizen ID para mag-apply.",
+    "category": "lifeline"
+  }
+]

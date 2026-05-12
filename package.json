@@ -9,10 +9,21 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.2",
+    "@react-native-community/netinfo": "^12.0.1",
+    "@supabase/supabase-js": "^2.105.4",
     "expo": "~54.0.33",
+    "expo-haptics": "~15.0.8",
+    "expo-image-picker": "~17.0.11",
+    "expo-router": "~6.0.23",
     "expo-status-bar": "~3.0.9",
+    "nativewind": "^4.2.3",
+    "openai": "^6.37.0",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-hook-form": "^7.75.0",
+    "react-native": "0.81.5",
+    "tailwindcss": "^4.3.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
