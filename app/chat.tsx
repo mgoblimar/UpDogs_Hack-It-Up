@@ -1,20 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import electricityContext from '@/data/electricity-context.json'
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Linking,
-  Image,
-} from 'react-native'
+import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
+import AppHeader from '@/components/AppHeader'
+import { Text, TextInput } from '@/components/CustomText'
 
 interface Message {
   id: string
@@ -231,16 +222,18 @@ export default function ChatScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-stone-50" edges={['bottom']}>
+    <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+      <AppHeader showBell showMenu />
+
       <KeyboardAvoidingView
-        className="flex-1"
+        style={{ flex: 1 }}
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
       >
         {/* Bill context banner */}
         {hasBillContext && (
-          <View className="bg-brand-orange/10 border-b border-brand-orange/20 px-4 py-2">
-            <Text className="text-brand-orange text-xs font-medium">
+          <View style={{ backgroundColor: '#FFFBEA', borderBottomWidth: 1, borderBottomColor: '#FDE68A', paddingHorizontal: 16, paddingVertical: 8 }}>
+            <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>
               🧾 May na-load na bill mula sa {billInput?.city} — pwede kang magtanong tungkol dito
             </Text>
           </View>
@@ -249,8 +242,8 @@ export default function ChatScreen() {
         {/* Messages */}
         <ScrollView
           ref={scrollRef}
-          className="flex-1 px-4"
-          contentContainerClassName="py-4 gap-3"
+          style={{ flex: 1, paddingHorizontal: 16, backgroundColor: '#EEF2F7' }}
+          contentContainerStyle={{ paddingVertical: 16, gap: 12 }}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         >
@@ -259,27 +252,30 @@ export default function ChatScreen() {
           ))}
 
           {loading && (
-            <View className="flex-row items-center gap-2 px-3 py-3 bg-white rounded-2xl rounded-bl-sm self-start max-w-xs shadow-sm">
-              <ActivityIndicator size="small" color="#F97316" />
-              <Text className="text-stone-400 text-sm">Iniisip...</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#fff', borderRadius: 20, borderBottomLeftRadius: 4, alignSelf: 'flex-start', maxWidth: 200, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#8BA7C7', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🦉</Text>
+              </View>
+              <ActivityIndicator size="small" color="#F5C518" />
+              <Text style={{ color: '#9CA3AF', fontSize: 13 }}>Iniisip...</Text>
             </View>
           )}
         </ScrollView>
 
         {/* Quick prompt chips */}
         {showQuickPrompts && (
-          <View className="bg-white border-t border-stone-100 px-4 pt-3 pb-1">
-            <Text className="text-stone-400 text-xs mb-2">Mabilis na tanong:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
-              <View className="flex-row gap-2 pb-2">
+          <View style={{ backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
+            <Text style={{ color: '#9CA3AF', fontSize: 11, marginBottom: 8, fontWeight: '600' }}>Mabilis na tanong:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', gap: 8, paddingBottom: 8 }}>
                 {shownPrompts.map((p) => (
                   <TouchableOpacity
                     key={p.label}
                     onPress={() => sendText(p.text)}
                     activeOpacity={0.75}
-                    className="bg-brand-orange/10 border border-brand-orange/25 rounded-full px-4 py-2"
+                    style={{ backgroundColor: '#FFFBEA', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 50, paddingHorizontal: 14, paddingVertical: 8 }}
                   >
-                    <Text className="text-brand-orange text-xs font-medium">{p.label}</Text>
+                    <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>{p.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -288,11 +284,11 @@ export default function ChatScreen() {
         )}
 
         {/* Input bar */}
-        <View className="flex-row items-end gap-2 px-4 py-3 bg-white border-t border-stone-100">
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
           <TextInput
-            className="flex-1 bg-stone-100 rounded-2xl px-4 py-3 text-stone-800 text-base"
-            placeholder="Magtanong tungkol sa bill mo..."
-            placeholderTextColor="#A8A29E"
+            style={{ flex: 1, backgroundColor: '#F3F4F6', borderRadius: 50, paddingHorizontal: 18, paddingVertical: 12, fontSize: 14, color: '#1C2B3A', maxHeight: 100 }}
+            placeholder="Enter message"
+            placeholderTextColor="#9CA3AF"
             value={input}
             onChangeText={setInput}
             multiline
@@ -304,16 +300,18 @@ export default function ChatScreen() {
           <TouchableOpacity
             onPress={() => sendText(input.trim())}
             disabled={!input.trim() || loading}
-            className={`rounded-full w-11 h-11 items-center justify-center ${
-              input.trim() && !loading ? 'bg-brand-orange' : 'bg-stone-200'
-            }`}
+            style={{
+              width: 42, height: 42, borderRadius: 21,
+              backgroundColor: input.trim() && !loading ? '#1C2B3A' : '#E5E7EB',
+              alignItems: 'center', justifyContent: 'center',
+            }}
             activeOpacity={0.8}
           >
-            <Text className="text-white text-lg">↑</Text>
+            <Text style={{ color: '#fff', fontSize: 16 }}>↑</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -378,9 +376,13 @@ function ChatBubble({ message }: { message: Message }) {
 
   if (isUser) {
     return (
-      <View className="max-w-xs self-end">
-        <View className="rounded-2xl rounded-br-sm px-4 py-3 bg-brand-orange">
-          <MarkdownBody text={message.content} isUser />
+      <View style={{ maxWidth: 280, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+        <View style={{ backgroundColor: '#fff', borderRadius: 20, borderBottomRightRadius: 4, paddingHorizontal: 16, paddingVertical: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
+          <MarkdownBody text={message.content} isUser={false} />
+        </View>
+        {/* Yellow user avatar */}
+        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5C518', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Text style={{ fontSize: 18 }}>👤</Text>
         </View>
       </View>
     )
@@ -404,8 +406,12 @@ function ChatBubble({ message }: { message: Message }) {
     .filter((l) => l.length > 0)
 
   return (
-    <View className="max-w-xs self-start">
-      <View className="rounded-2xl rounded-bl-sm px-4 py-3 bg-white shadow-sm">
+    <View style={{ maxWidth: 280, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+      {/* KoKo owl avatar */}
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8BA7C7', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Text style={{ fontSize: 18 }}>🦉</Text>
+      </View>
+      <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, borderBottomLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
         <MarkdownBody text={mainText} isUser={false} />
 
         {hasSourcesSection && sourceLines.length > 0 && (

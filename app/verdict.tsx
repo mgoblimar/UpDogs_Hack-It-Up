@@ -1,15 +1,12 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, Linking } from 'react-native'
 import { useEffect, useRef } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
 import { useHistoryStore } from '@/store/historyStore'
+import AppHeader from '@/components/AppHeader'
+import ExplanationRow from '@/components/ExplanationRow'
+import { PrimaryButton, OutlineButton } from '@/components/Buttons'
+import { Text } from '@/components/CustomText'
 
 export default function VerdictScreen() {
   const router = useRouter()
@@ -21,7 +18,7 @@ export default function VerdictScreen() {
 
   useEffect(() => {
     if (!verdict || !billInput) {
-      router.replace('/')
+      router.replace('/home')
       return
     }
     if (savedRef.current) return
@@ -50,188 +47,169 @@ export default function VerdictScreen() {
 
   function handleScanNew() {
     reset()
-    router.replace('/')
+    router.replace('/home')
   }
 
   return (
-    <ScrollView className="flex-1 bg-stone-50" contentContainerClassName="pb-12">
-      {/* Hero verdict */}
-      <View
-        className={`px-6 pt-12 pb-10 items-center ${
-          isOvercharged ? 'bg-red-500' : isHigh ? 'bg-yellow-500' : 'bg-green-500'
-        }`}
-      >
-        <Text className="text-6xl mb-3">
-          {isOvercharged ? '🚨' : isHigh ? '⚠️' : '✅'}
-        </Text>
-        <Text className="text-white text-3xl font-bold text-center">
-          {isOvercharged
-            ? 'Na-overcharge Ka!'
-            : isHigh
-            ? 'Medyo Mataas ang Bill Mo'
-            : 'Mukhang Normal ang Bill Mo'}
-        </Text>
-        <Text className="text-white/80 text-base text-center mt-2">
-          {isOvercharged
-            ? 'May karapatan kang magreklamo sa ERC.'
-            : isHigh
-            ? 'Bantayan ang susunod na bill mo.'
-            : 'Ang iyong bill ay nasa loob ng ERC limits.'}
+    <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+      <AppHeader showBell showMenu />
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+
+        {/* Progress dots + date */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#E5E7EB' }} />
+            <View style={{ width: 28, height: 7, borderRadius: 4, backgroundColor: '#F5C518' }} />
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#E5E7EB' }} />
+          </View>
+          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '600', letterSpacing: 0.5, textAlign: 'center' }}>
+            {new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
+          </Text>
+        </View>
+
+        <Text style={{ color: '#1C2B3A', fontSize: 22, fontWeight: '900', textAlign: 'center', marginTop: 8, letterSpacing: 1 }}>
+          RESULTA
         </Text>
 
-        {verdict.overchargeAmount > 0 && (
-          <View className="bg-white/25 rounded-3xl px-8 py-5 mt-6 items-center w-full">
-            <Text className="text-white/80 text-sm">Tinatayang labis na sinisingil</Text>
-            <Text className="text-white text-5xl font-bold mt-1">
-              ₱{verdict.overchargeAmount.toFixed(2)}
+        {/* Main verdict card */}
+        <View style={{
+          marginHorizontal: 20,
+          marginTop: 16,
+          borderRadius: 20,
+          backgroundColor: isOvercharged ? '#FFF0F0' : isHigh ? '#FFFBEA' : '#F0FFF4',
+          borderWidth: 2,
+          borderColor: isOvercharged ? '#FECACA' : isHigh ? '#FDE68A' : '#A7F3D0',
+          padding: 24,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+          {/* Warning / Check icon */}
+          <View style={{
+            width: 56, height: 56, borderRadius: 28,
+            backgroundColor: 'transparent',
+            borderWidth: 2.5,
+            borderColor: isOvercharged ? '#DC2626' : isHigh ? '#D97706' : '#059669',
+            alignItems: 'center', justifyContent: 'center',
+            marginBottom: 12,
+          }}>
+            <Text style={{ fontSize: 24 }}>{isOvercharged ? '⚠️' : isHigh ? '⚠️' : '✅'}</Text>
+          </View>
+
+          <Text style={{ color: isOvercharged ? '#DC2626' : isHigh ? '#D97706' : '#059669', fontSize: 18, fontWeight: '800', textAlign: 'center' }}>
+            {isOvercharged ? 'May Overcharge!' : isHigh ? 'Medyo Mataas ang Bill!' : 'Mukhang Normal ang Bill Mo'}
+          </Text>
+
+          {verdict.overchargeAmount > 0 && (
+            <Text style={{ color: isOvercharged ? '#DC2626' : '#D97706', fontSize: 40, fontWeight: '900', letterSpacing: -1, marginVertical: 8 }}>
+              ₱{verdict.overchargeAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+          )}
+
+          <View style={{
+            backgroundColor: isOvercharged ? '#FECACA' : isHigh ? '#FDE68A' : '#A7F3D0',
+            borderRadius: 50, paddingHorizontal: 16, paddingVertical: 6, marginTop: 4,
+          }}>
+            <Text style={{ color: isOvercharged ? '#7F1D1D' : isHigh ? '#78350F' : '#065F46', fontSize: 12, fontWeight: '700' }}>
+              {isOvercharged ? 'Sobra sa legal rate ng ERC' : isHigh ? 'Malapit sa ERC maximum' : 'Nasa loob ng ERC limits'}
             </Text>
           </View>
-        )}
-      </View>
-
-      {/* Rate comparison */}
-      <View className="mx-6 mt-6 bg-white rounded-3xl p-5 shadow-sm">
-        <Text className="text-stone-800 font-bold text-base mb-4">Rate Comparison</Text>
-        <View className="flex-row justify-between mb-3">
-          <Text className="text-stone-500 text-sm">Iyong rate</Text>
-          <Text
-            className={`font-bold text-sm ${
-              isOvercharged ? 'text-red-600' : isHigh ? 'text-yellow-600' : 'text-green-600'
-            }`}
-          >
-            ₱{verdict.userRatePerKwh.toFixed(4)}/kWh
-          </Text>
         </View>
-        <View className="flex-row justify-between mb-3">
-          <Text className="text-stone-500 text-sm">ERC maximum</Text>
-          <Text className="text-stone-800 font-bold text-sm">
-            ₱{verdict.ercMaxRatePerKwh.toFixed(4)}/kWh
-          </Text>
-        </View>
-        <View className="h-px bg-stone-100 my-1" />
-        <View className="flex-row justify-between mt-2">
-          <Text className="text-stone-500 text-sm">Pagkakaiba</Text>
-          <Text
-            className={`font-bold text-sm ${
-              verdict.userRatePerKwh > verdict.ercMaxRatePerKwh ? 'text-red-600' : 'text-green-600'
-            }`}
-          >
-            {verdict.userRatePerKwh > verdict.ercMaxRatePerKwh ? '+' : ''}
-            ₱{(verdict.userRatePerKwh - verdict.ercMaxRatePerKwh).toFixed(4)}/kWh
-          </Text>
-        </View>
-      </View>
 
-      {/* What to do next */}
-      <Text className="text-stone-800 text-lg font-bold px-6 mt-6 mb-3">Ano ang Gagawin Mo?</Text>
-
-      <View className="px-6 gap-3">
-        {(isOvercharged || isHigh) && (
-          <>
-            <ActionCard
-              icon="📋"
-              title="Mag-file ng Reklamo sa ERC"
-              description="Ang ERC ang nagre-regulate ng electricity rates. Libre ang pag-file ng reklamo."
-              onPress={() => router.push('/erc-complaint')}
-              highlight={isOvercharged}
-            />
-            <ActionCard
-              icon="📱"
-              title="Tawagan ang Meralco"
-              description="Hotline: 16211 — Humingi ng bill explanation o formal dispute."
-              onPress={() => Linking.openURL('tel:16211')}
-            />
-          </>
-        )}
-
-        {isHigh && (
-          <ActionCard
-            icon="👁️"
-            title="Bantayan ang Susunod na Bill"
-            description="I-scan ulit ang susunod na bill para makita kung patuloy na tumataas."
-            onPress={handleScanNew}
-          />
-        )}
-
-        {isNormal && (
-          <ActionCard
-            icon="💡"
-            title="Tips para Mabawasan ang Bill"
-            description="Gamitin ang inverter aircon, LED bulbs, at i-unplug ang hindi ginagamit."
-            onPress={() => router.push('/faq')}
-          />
-        )}
-
-        <ActionCard
-          icon="⚡"
-          title="Lifeline Rate Checker"
-          description="Alamin kung qualified ka sa government discount para sa 0–100 kWh consumers."
-          onPress={() => router.push('/lifeline-checker')}
-        />
-
-        <ActionCard
-          icon="🏛️"
-          title="Report sa DTI"
-          description="May sub-meter abuse ang landlord mo? Alamin ang iyong karapatan."
-          onPress={() => router.push('/dti-report')}
-        />
-
-        <ActionCard
-          icon="🏘️"
-          title="Tingnan ang Community Heat Map"
-          description="Alamin kung gaano ka-mataas ang bill sa iyong lungsod kumpara sa ibang lugar."
-          onPress={() => router.push('/heat-map')}
-        />
-
-        <ActionCard
-          icon="🤖"
-          title="Magtanong sa AI Assistant"
-          description="Hindi pa rin malinaw? Itanong sa aming Taglish AI chatbot."
-          onPress={() => router.push('/chat')}
-        />
-      </View>
-
-      {/* Scan new bill */}
-      <TouchableOpacity
-        className="mx-6 mt-8 bg-brand-orange rounded-2xl py-4 items-center"
-        onPress={handleScanNew}
-        activeOpacity={0.85}
-      >
-        <Text className="text-white text-lg font-bold">I-scan ang Bagong Bill 📄</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  )
-}
-
-function ActionCard({
-  icon,
-  title,
-  description,
-  onPress,
-  highlight = false,
-}: {
-  icon: string
-  title: string
-  description: string
-  onPress: () => void
-  highlight?: boolean
-}) {
-  return (
-    <TouchableOpacity
-      className={`rounded-2xl p-4 flex-row gap-3 items-start ${
-        highlight ? 'bg-red-50 border-2 border-red-200' : 'bg-white border-2 border-stone-100'
-      }`}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <Text className="text-2xl">{icon}</Text>
-      <View className="flex-1">
-        <Text className={`font-bold text-sm ${highlight ? 'text-red-700' : 'text-stone-800'}`}>
-          {title}
+        {/* Paliwanag section */}
+        <Text style={{ color: '#1C2B3A', fontSize: 17, fontWeight: '800', paddingHorizontal: 20, marginTop: 24, marginBottom: 12 }}>
+          Paliwanag ng KuryenteKo
         </Text>
-        <Text className="text-stone-500 text-xs mt-1 leading-4">{description}</Text>
-      </View>
-      <Text className="text-stone-300 text-lg">›</Text>
-    </TouchableOpacity>
+
+        <View style={{ marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+          {/* Rate comparison rows */}
+          <ExplanationRow
+            icon="📊"
+            title={`Iyong Rate: ₱${verdict.userRatePerKwh.toFixed(2)}/kWh`}
+            description={`ERC maximum: ₱${verdict.ercMaxRatePerKwh.toFixed(2)}/kWh`}
+            isLast={false}
+            isUp={isOvercharged || isHigh}
+          />
+          {verdict.overchargeAmount > 0 && (
+            <ExplanationRow
+              icon="🏠"
+              title={`Illegal Sub-meter Rate`}
+              description={`Ang charge sa iyo ay ₱${verdict.userRatePerKwh.toFixed(2)}/kWh. Ang legal na rate dapat sa iyong lugar ay ₱${verdict.ercMaxRatePerKwh.toFixed(2)}/kWh lang.`}
+              isLast={true}
+              isUp={true}
+            />
+          )}
+        </View>
+
+        {/* Rate comparison card */}
+        <View style={{ marginHorizontal: 20, marginTop: 12, backgroundColor: '#fff', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+          <Text style={{ color: '#1C2B3A', fontSize: 15, fontWeight: '700', marginBottom: 12 }}>Rate Comparison</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+            <Text style={{ color: '#9CA3AF', fontSize: 14 }}>Iyong rate</Text>
+            <Text style={{ color: isOvercharged ? '#DC2626' : isHigh ? '#D97706' : '#059669', fontWeight: '700', fontSize: 14 }}>
+              ₱{verdict.userRatePerKwh.toFixed(4)}/kWh
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+            <Text style={{ color: '#9CA3AF', fontSize: 14 }}>ERC maximum</Text>
+            <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14 }}>₱{verdict.ercMaxRatePerKwh.toFixed(4)}/kWh</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 }}>
+            <Text style={{ color: '#9CA3AF', fontSize: 14 }}>Pagkakaiba</Text>
+            <Text style={{ color: verdict.userRatePerKwh > verdict.ercMaxRatePerKwh ? '#DC2626' : '#059669', fontWeight: '700', fontSize: 14 }}>
+              {verdict.userRatePerKwh > verdict.ercMaxRatePerKwh ? '+' : ''}₱{(verdict.userRatePerKwh - verdict.ercMaxRatePerKwh).toFixed(4)}/kWh
+            </Text>
+          </View>
+        </View>
+
+        {/* Mga Pwedeng Gawin */}
+        <Text style={{ color: '#1C2B3A', fontSize: 17, fontWeight: '800', paddingHorizontal: 20, marginTop: 24, marginBottom: 12 }}>
+          Mga Pwedeng Gawin:
+        </Text>
+
+        <View style={{ paddingHorizontal: 20, gap: 10 }}>
+          {(isOvercharged || isHigh) && (
+            <TouchableOpacity
+              onPress={() => router.push('/erc-complaint')}
+              activeOpacity={0.85}
+              style={{ backgroundColor: '#1C2B3A', borderRadius: 14, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+            >
+              <Text style={{ fontSize: 18 }}>⚖️</Text>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Gumawa ng ERC Complaint</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            onPress={() => router.push('/heat-map')}
+            activeOpacity={0.85}
+            style={{ backgroundColor: '#fff', borderRadius: 14, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 2, borderColor: '#E5E7EB' }}
+          >
+            <Text style={{ fontSize: 18 }}>🗺️</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 15, fontWeight: '700' }}>Tingnan ang Area Map</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push('/chat')}
+            activeOpacity={0.85}
+            style={{ backgroundColor: '#fff', borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+          >
+            <Text style={{ fontSize: 16 }}>🤖</Text>
+            <Text style={{ color: '#9CA3AF', fontSize: 14, fontWeight: '600' }}>Magtanong sa KoKo AI</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleScanNew}
+            activeOpacity={0.7}
+            style={{ paddingVertical: 14, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#9CA3AF', fontSize: 13 }}>📄 I-scan ang Bagong Bill</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   )
 }
+

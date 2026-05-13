@@ -1,19 +1,14 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native'
+import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useBillStore } from '@/store/billStore'
 import { METRO_MANILA_CITIES } from '@/lib/constants'
 import type { BillInput } from '@/types/bill'
+import AppHeader from '@/components/AppHeader'
+import KoKoSpeechBubble from '@/components/KoKoSpeechBubble'
+import { PrimaryButton } from '@/components/Buttons'
+import { Text, TextInput } from '@/components/CustomText'
 
 interface ManualFormData {
   totalAmount: string
@@ -30,7 +25,6 @@ export default function ManualInputScreen() {
   const router = useRouter()
   const setBillInput = useBillStore((s) => s.setBillInput)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
-
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ManualFormData>({
@@ -70,169 +64,190 @@ export default function ManualInputScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView className="flex-1 bg-stone-50" contentContainerClassName="px-6 py-8">
+    <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+      <AppHeader showBack />
 
-        <Text className="text-stone-500 text-base mb-8 text-center">
-          3 numero lang ang kailangan para malaman kung tama ang iyong bill.
-        </Text>
-
-        {/* Bill Amount */}
-        <View className="mb-6">
-          <Text className="text-stone-800 font-semibold text-base mb-2">
-            Magkano ang iyong bill? *
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Subtitle */}
+          <Text style={{ color: '#6B7280', fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+            3 numero lang ang kailangan para malaman kung tama ang iyong bill.
           </Text>
+
+          {/* Bill Amount */}
+          <FieldLabel label="Kabuuang halaga ng bill" required hint />
           <Controller
             control={control}
             name="totalAmount"
             rules={{ required: 'Ilagay ang total amount ng bill.' }}
             render={({ field: { onChange, value } }) => (
-              <View className="flex-row items-center bg-white border-2 border-stone-200 rounded-xl px-4 py-3 gap-2">
-                <Text className="text-stone-500 text-lg font-bold">₱</Text>
-                <TextInput
-                  className="flex-1 text-stone-900 text-xl font-semibold"
-                  placeholder="0.00"
-                  placeholderTextColor="#A8A29E"
-                  keyboardType="decimal-pad"
-                  value={value}
-                  onChangeText={onChange}
-                />
-              </View>
+              <TextInput
+                style={fieldStyle}
+                placeholder="₱ 0.00"
+                placeholderTextColor="#D1D5DB"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={onChange}
+              />
             )}
           />
-          {errors.totalAmount && (
-            <Text className="text-red-500 text-sm mt-1">{errors.totalAmount.message}</Text>
-          )}
-        </View>
+          {errors.totalAmount && <FieldError msg={errors.totalAmount.message!} />}
 
-        {/* kWh */}
-        <View className="mb-6">
-          <Text className="text-stone-800 font-semibold text-base mb-2">
-            Ilang kWh ang ginamit mo? *
-          </Text>
+          {/* kWh */}
+          <FieldLabel label="Kiloawatts na nagamit (kWh)" required hint />
           <Controller
             control={control}
             name="kwh"
             rules={{ required: 'Ilagay ang kWh consumption.' }}
             render={({ field: { onChange, value } }) => (
-              <View className="flex-row items-center bg-white border-2 border-stone-200 rounded-xl px-4 py-3 gap-2">
-                <TextInput
-                  className="flex-1 text-stone-900 text-xl font-semibold"
-                  placeholder="0"
-                  placeholderTextColor="#A8A29E"
-                  keyboardType="number-pad"
-                  value={value}
-                  onChangeText={onChange}
-                />
-                <Text className="text-stone-500 text-lg font-bold">kWh</Text>
-              </View>
+              <TextInput
+                style={fieldStyle}
+                placeholder="0"
+                placeholderTextColor="#D1D5DB"
+                keyboardType="number-pad"
+                value={value}
+                onChangeText={onChange}
+              />
             )}
           />
-          {errors.kwh && (
-            <Text className="text-red-500 text-sm mt-1">{errors.kwh.message}</Text>
-          )}
-          <Text className="text-stone-400 text-xs mt-1">
+          {errors.kwh && <FieldError msg={errors.kwh.message!} />}
+          <Text style={{ color: '#9CA3AF', fontSize: 12, marginBottom: 16, marginTop: -10 }}>
             Makikita ito sa gitna ng iyong bill bilang "kWh Used" o "Consumption"
           </Text>
-        </View>
 
-        {/* City */}
-        <View className="mb-8">
-          <Text className="text-stone-800 font-semibold text-base mb-2">
-            Saang lungsod ka nakatira? *
-          </Text>
+          {/* City */}
+          <FieldLabel label="Lungsod" required />
           <TouchableOpacity
-            className="bg-white border-2 border-stone-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+            style={[fieldStyle, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
             onPress={() => setCityPickerOpen(!cityPickerOpen)}
             activeOpacity={0.8}
           >
-            <Text className={selectedCity ? 'text-stone-900 text-lg' : 'text-stone-400 text-lg'}>
+            <Text style={{ color: selectedCity ? '#1C2B3A' : '#D1D5DB', fontSize: 16 }}>
               {selectedCity || 'Piliin ang lungsod...'}
             </Text>
-            <Text className="text-stone-400">{cityPickerOpen ? '▲' : '▼'}</Text>
+            <Text style={{ color: '#9CA3AF' }}>{cityPickerOpen ? '▲' : '▼'}</Text>
           </TouchableOpacity>
-
           {cityPickerOpen && (
-            <View className="bg-white border-2 border-stone-200 rounded-xl mt-1 overflow-hidden shadow-sm">
-              {METRO_MANILA_CITIES.map((city) => (
-                <TouchableOpacity
-                  key={city}
-                  className={`px-4 py-3 border-b border-stone-100 ${selectedCity === city ? 'bg-orange-50' : ''}`}
-                  onPress={() => {
-                    setValue('city', city)
-                    setCityPickerOpen(false)
-                  }}
-                >
-                  <Text className={`text-base ${selectedCity === city ? 'text-brand-orange font-semibold' : 'text-stone-700'}`}>
-                    {city}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <View style={{ backgroundColor: '#fff', borderRadius: 14, marginBottom: 16, overflow: 'hidden', maxHeight: 160, borderWidth: 2, borderColor: '#E5E7EB' }}>
+              <ScrollView nestedScrollEnabled>
+                {METRO_MANILA_CITIES.map((city) => (
+                  <TouchableOpacity
+                    key={city}
+                    style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', backgroundColor: selectedCity === city ? '#FFFBEA' : '#fff' }}
+                    onPress={() => { setValue('city', city); setCityPickerOpen(false) }}
+                  >
+                    <Text style={{ color: selectedCity === city ? '#D4A800' : '#374151', fontWeight: selectedCity === city ? '700' : '400', fontSize: 15 }}>{city}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
-        </View>
 
-        {/* Advanced charges — optional */}
-        <TouchableOpacity
-          onPress={() => setAdvancedOpen(!advancedOpen)}
-          className="flex-row items-center justify-between py-3 mb-2"
-          activeOpacity={0.7}
-        >
-          <Text className="text-stone-500 text-sm font-medium">
-            📋 May breakdown ng charges? (opsyonal)
-          </Text>
-          <Text className="text-stone-400 text-sm">{advancedOpen ? '▲ Itago' : '▼ Ipakita'}</Text>
-        </TouchableOpacity>
-
-        {advancedOpen && (
-          <View className="bg-stone-100 rounded-2xl p-4 mb-6 gap-4">
-            <Text className="text-stone-400 text-xs">
-              Makikita sa detalye ng iyong bill. Hindi required — para sa mas tumpak na analysis.
+          {/* Advanced charges — optional */}
+          <TouchableOpacity
+            onPress={() => setAdvancedOpen(!advancedOpen)}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, marginBottom: 8 }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: '#6B7280', fontSize: 14, fontWeight: '600' }}>
+              📋 May breakdown ng charges? (opsyonal)
             </Text>
-            {[
-              { name: 'generationCharge' as const, label: 'Generation Charge' },
-              { name: 'transmissionCharge' as const, label: 'Transmission Charge' },
-              { name: 'systemLossCharge' as const, label: 'System Loss Charge' },
-              { name: 'distributionCharge' as const, label: 'Distribution Charge' },
-              { name: 'taxes' as const, label: 'Government Taxes / VAT' },
-            ].map(({ name, label }) => (
-              <View key={name}>
-                <Text className="text-stone-600 text-xs font-medium mb-1">{label} (₱)</Text>
-                <Controller
-                  control={control}
-                  name={name}
-                  render={({ field: { onChange, value } }) => (
-                    <View className="flex-row items-center bg-white border border-stone-200 rounded-xl px-4 py-3 gap-2">
-                      <Text className="text-stone-400 font-bold">₱</Text>
+            <Text style={{ color: '#9CA3AF', fontSize: 13 }}>{advancedOpen ? '▲ Itago' : '▼ Ipakita'}</Text>
+          </TouchableOpacity>
+
+          {advancedOpen && (
+            <View style={{ backgroundColor: '#F3F4F6', borderRadius: 16, padding: 16, marginBottom: 20, gap: 12 }}>
+              <Text style={{ color: '#9CA3AF', fontSize: 12 }}>
+                Makikita sa detalye ng iyong bill. Hindi required — para sa mas tumpak na analysis.
+              </Text>
+              {[
+                { name: 'generationCharge' as const, label: 'Generation Charge' },
+                { name: 'transmissionCharge' as const, label: 'Transmission Charge' },
+                { name: 'systemLossCharge' as const, label: 'System Loss Charge' },
+                { name: 'distributionCharge' as const, label: 'Distribution Charge' },
+                { name: 'taxes' as const, label: 'Government Taxes / VAT' },
+              ].map(({ name, label }) => (
+                <View key={name}>
+                  <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>{label} (₱)</Text>
+                  <Controller
+                    control={control}
+                    name={name}
+                    render={({ field: { onChange, value } }) => (
                       <TextInput
-                        className="flex-1 text-stone-900 text-base"
+                        style={[fieldStyle, { backgroundColor: '#fff', marginBottom: 0 }]}
                         placeholder="0.00"
-                        placeholderTextColor="#D6D3D1"
+                        placeholderTextColor="#D1D5DB"
                         keyboardType="decimal-pad"
                         value={value}
                         onChangeText={onChange}
                       />
-                    </View>
-                  )}
-                />
-              </View>
-            ))}
+                    )}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* KoKo speech bubble */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 }}>
+            <Text style={{ fontSize: 44 }}>🦉</Text>
+            <View style={{ flex: 1, backgroundColor: '#F5C518', borderRadius: 12, borderBottomLeftRadius: 4, padding: 10, marginLeft: 10 }}>
+              <Text style={{ color: '#1C2B3A', fontSize: 12, fontWeight: '600' }}>
+                Siguraduhing tama ang mga numero para sa mas accurate na analysis!
+              </Text>
+            </View>
           </View>
-        )}
 
-        {/* Submit */}
-        <TouchableOpacity
-          className="bg-brand-orange rounded-2xl py-5 items-center shadow-sm"
-          onPress={handleSubmit(onSubmit)}
-          activeOpacity={0.85}
-        >
-          <Text className="text-white text-xl font-bold">I-CHECK NGAYON ⚡</Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Submit */}
+          <TouchableOpacity
+            style={{ backgroundColor: '#1C2B3A', borderRadius: 50, paddingVertical: 18, alignItems: 'center' }}
+            onPress={handleSubmit(onSubmit)}
+            activeOpacity={0.85}
+          >
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 1 }}>
+              I-ANALYZE ANG BILL KO
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   )
+}
+
+const fieldStyle: any = {
+  backgroundColor: '#fff',
+  borderRadius: 14,
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  fontSize: 16,
+  color: '#1C2B3A',
+  marginBottom: 16,
+  shadowColor: '#000',
+  shadowOpacity: 0.04,
+  shadowRadius: 4,
+  elevation: 1,
+}
+
+function FieldLabel({ label, required, hint }: { label: string; required?: boolean; hint?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14 }}>{label}</Text>
+      {hint && (
+        <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#F5C518', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#1C2B3A', fontSize: 11, fontWeight: '800' }}>?</Text>
+        </View>
+      )}
+    </View>
+  )
+}
+
+function FieldError({ msg }: { msg: string }) {
+  return <Text style={{ color: '#EF4444', fontSize: 12, marginTop: -10, marginBottom: 12 }}>{msg}</Text>
 }

@@ -152,6 +152,34 @@
       "source": "ERC FiT-All Rate Determination Orders, DOE Renewable Energy Reports"
     }
   ],
+  "illegalJumpers": {
+    "definition": "Ang illegal electricity jumper (o 'jumper sa kuryente') ay unauthorized bypass wires o tampered meters na ginagamit para magnakaw ng kuryente sa pamamagitan ng pag-iwas sa meter reading. Kasama rito ang direktang koneksyon mula sa utility pole patungong bahay na nakalusot sa meter.",
+    "law": "Ang paggamit o pagpapanatili ng illegal connection ay lumalabag sa Republic Act No. 7832, ang Anti-Electricity and Electric Transmission Lines/Materials Pilferage Act of 1994.",
+    "penalties": {
+      "imprisonment": "2 taon at 4 buwan hanggang 12 taon ng pagkabilanggo, depende sa gravity at kabuuang halaga ng ninakaw na kuryente.",
+      "fines": "₱50,000 hanggang ₱100,000 na multa. Kung napatunayan ang large-scale theft, maaaring mag-impose ng multa ang korte na hanggang 5 beses ng halaga ng ninakaw na kuryente.",
+      "disconnection": "Agad na puputulin ng power distributor ang linya. Kailangan ng registered account owner na bayaran ang estimated differential billings at surcharges bago ang reconnection.",
+      "liableParties": "Ang taong nakasulat sa utility bill, ang kasalukuyang naninirahan na nakikinabang sa linya, o ang landlord na pumayag dito ay maaaring sampahan ng kriminal na kaso."
+    },
+    "signs": [
+      "Bypassing Wires: Panlabas na mga wire na direktang konektado mula sa main utility pole line (talon o hakot) papuntang bahay, nakalusot sa physical meter.",
+      "Meter Tampering: Sira, nawawala, o pekeng lead seals sa meter box housing.",
+      "Mechanical Interference: Mga butas na na-drill sa glass casing ng meter, o magnets na nakalagay sa itaas para artipisyal na mapabagal ang internal spinning disc.",
+      "Flying Connections: Pagspliplit ng service drops para may kuryente ang kalapit na hindi naka-meter na bahay o extension nang walang pahintulot."
+    ],
+    "risks": [
+      "Fire Hazards: Maluwag at sub-standard na jumper taps ay walang circuit breakers, nagdudulot ng electrical overloading, short circuits, at sunog sa komunidad.",
+      "Grid Instability: Mataas na konsentrasyon ng jumpers ay nagdudulot ng localized transformer explosions at brownouts para sa mga paying households.",
+      "Electrocution: Hindi insulated na DIY wires na nakababa sa mga kalye ay lubhang mapanganib lalo na sa malakas na ulan."
+    ],
+    "howToReport": {
+      "meralco": "Tumawag sa 24/7 hotline: 16211 o 8631-1111. Mag-report din sa official Meralco social media accounts o sa Meralco Mobile App.",
+      "provincial": "Bisitahin o i-message ang inyong lokal na provincial electric cooperative (hal. DASURECO, BENECO, ISELCO) para mag-file ng anonymous tip.",
+      "details": "Ibigay ang eksaktong kumpletong address, landmark, at kung posible, maikling paglalarawan kung saan nakatago ang illegal connection line.",
+      "note": "Maaari kang mag-report nang hindi ibinubunyag ang iyong pagkakakilanlan para maiwasan ang away sa kapitbahay."
+    },
+    "ifSuspectSubMeterTheft": "Kung pinaghihinalaan mong may nagnanakaw ng kuryente mula sa iyong backyard meter line, maaari kang humihingi ng tulong sa pag-isolate ng main breaker para kumpirmahin ang sub-meter theft, o mag-draft ng formal complaint para sa iyong utility provider."
+  },
   "consumerRights": [
     "Karapatan sa malinaw at tumpak na billing (RA 7832)",
     "Karapatan magreklamo sa ERC nang libre (ERC Resolution 09-2006)",

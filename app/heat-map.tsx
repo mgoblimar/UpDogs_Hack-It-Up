@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import MapView, { Marker, UrlTile } from 'react-native-maps'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useBillStore } from '@/store/billStore'
+import { Text } from '@/components/CustomText'
 
 interface CityRow {
   city: string

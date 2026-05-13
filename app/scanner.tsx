@@ -1,12 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  TextInput,
-} from 'react-native'
+import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
@@ -15,13 +7,19 @@ import { useBillStore } from '@/store/billStore'
 import { extractBillFromImage } from '@/services/ocrService'
 import { METRO_MANILA_CITIES } from '@/lib/constants'
 import type { BillInput } from '@/types/bill'
+import AppHeader from '@/components/AppHeader'
+import KoKoSpeechBubble from '@/components/KoKoSpeechBubble'
+import { PrimaryButton } from '@/components/Buttons'
+import { Text, TextInput } from '@/components/CustomText'
 
 type ScanState = 'idle' | 'scanning' | 'confirm' | 'error'
+type TabMode = 'scan' | 'manual'
 
 export default function ScannerScreen() {
   const router = useRouter()
   const setBillInput = useBillStore((s) => s.setBillInput)
 
+  const [tab, setTab] = useState<TabMode>('scan')
   const [scanState, setScanState] = useState<ScanState>('idle')
   const [extracted, setExtracted] = useState<Partial<BillInput>>({})
   const [errorMsg, setErrorMsg] = useState('')
@@ -65,87 +63,305 @@ export default function ScannerScreen() {
 
   if (scanState === 'scanning') {
     return (
-      <SafeAreaView className="flex-1 bg-stone-50 items-center justify-center gap-4 px-6">
-        <ActivityIndicator size="large" color="#F97316" />
-        <Text className="text-stone-700 text-lg font-semibold text-center">Binabasa ang bill mo...</Text>
-        <Text className="text-stone-400 text-sm text-center">Hintayin lang, ilang segundo lang ito.</Text>
-      </SafeAreaView>
+      <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+        <AppHeader showBack />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 24 }}>
+          <ActivityIndicator size="large" color="#F5C518" />
+          <Text style={{ color: '#1C2B3A', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
+            Binabasa ang bill mo...
+          </Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center' }}>
+            Hintayin lang, ilang segundo lang ito.
+          </Text>
+        </View>
+      </View>
     )
   }
 
   if (scanState === 'error') {
     return (
-      <SafeAreaView className="flex-1 bg-stone-50 items-center justify-center px-6 gap-6">
-        <Text className="text-5xl">😔</Text>
-        <Text className="text-stone-800 text-xl font-bold text-center">Hindi Na-scan ang Bill</Text>
-        <Text className="text-stone-500 text-base text-center">{errorMsg}</Text>
-        <View className="gap-3 w-full">
+      <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+        <AppHeader showBack />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 20 }}>
+          <Text style={{ fontSize: 56 }}>😔</Text>
+          <Text style={{ color: '#1C2B3A', fontSize: 22, fontWeight: '800', textAlign: 'center' }}>
+            Hindi Na-scan ang Bill
+          </Text>
+          <Text style={{ color: '#6B7280', fontSize: 15, textAlign: 'center' }}>{errorMsg}</Text>
           <TouchableOpacity
-            className="bg-brand-orange rounded-2xl py-4 items-center"
+            style={{ backgroundColor: '#F5C518', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' }}
             onPress={() => setScanState('idle')}
           >
-            <Text className="text-white text-lg font-bold">Subukan Ulit</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '800' }}>Subukan Ulit</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className="bg-stone-200 rounded-2xl py-4 items-center"
-            onPress={() => router.push('/manual-input')}
+            style={{ backgroundColor: '#E5E7EB', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' }}
+            onPress={() => setTab('manual')}
           >
-            <Text className="text-stone-700 text-lg font-semibold">Manual Input na lang</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '600' }}>Manual Input na lang</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   if (scanState === 'confirm') {
     return (
-      <ConfirmScreen
-        extracted={extracted}
-        onExtractedChange={setExtracted}
-        onConfirm={handleConfirm}
-        onRescan={() => setScanState('idle')}
-      />
+      <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+        <AppHeader showBack />
+        <ConfirmScreen
+          extracted={extracted}
+          onExtractedChange={setExtracted}
+          onConfirm={handleConfirm}
+          onRescan={() => setScanState('idle')}
+        />
+      </View>
     )
   }
 
-  // Idle state — capture options
   return (
-    <SafeAreaView className="flex-1 bg-stone-50">
-      <View className="flex-1 items-center justify-center px-6 gap-6">
-        <Text className="text-7xl">📄</Text>
-        <Text className="text-stone-800 text-2xl font-bold text-center">I-scan ang Iyong Bill</Text>
-        <Text className="text-stone-500 text-base text-center">
-          Siguraduhing malinaw ang larawan. Iwasang maging malabo o may liwanag na sumasalamin.
+    <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
+      <AppHeader showBack />
+
+      {/* Date row */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+        <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+          {new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
         </Text>
 
-        <View className="w-full gap-3 mt-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 12 }}>
+          {/* Back button circle */}
           <TouchableOpacity
-            className="bg-brand-orange rounded-2xl py-5 flex-row items-center justify-center gap-3 shadow-sm"
-            onPress={() => handleCapture(true)}
-            activeOpacity={0.85}
+            onPress={() => router.back()}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Text className="text-2xl">📷</Text>
-            <Text className="text-white text-xl font-bold">Buksan ang Camera</Text>
+            <Text style={{ fontSize: 18 }}>←</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-white border-2 border-stone-200 rounded-2xl py-5 flex-row items-center justify-center gap-3"
-            onPress={() => handleCapture(false)}
-            activeOpacity={0.85}
-          >
-            <Text className="text-2xl">🖼️</Text>
-            <Text className="text-stone-700 text-xl font-semibold">Piliin mula sa Gallery</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="py-4 items-center"
-            onPress={() => router.push('/manual-input')}
-          >
-            <Text className="text-stone-400 text-base">Manual input na lang →</Text>
-          </TouchableOpacity>
+          <View>
+            <Text style={{ color: '#1C2B3A', fontSize: 17, fontWeight: '700' }}>Suriin natin ang iyong bill,</Text>
+            <Text style={{ color: '#F5C518', fontSize: 17, fontWeight: '800' }}>Ka-KuryenteKo!</Text>
+          </View>
         </View>
       </View>
-    </SafeAreaView>
+
+      {/* Tab toggle */}
+      <View style={{ marginHorizontal: 20, marginTop: 20, backgroundColor: '#E5E7EB', borderRadius: 50, flexDirection: 'row', padding: 4 }}>
+        <TouchableOpacity
+          onPress={() => setTab('scan')}
+          style={{
+            flex: 1, paddingVertical: 12, borderRadius: 50, alignItems: 'center',
+            backgroundColor: tab === 'scan' ? '#F5C518' : 'transparent',
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ fontWeight: '700', color: tab === 'scan' ? '#1C2B3A' : '#6B7280', fontSize: 14 }}>
+            Photo Scan
+          </Text>
+        </TouchableOpacity>
+        <View style={{ width: 1, backgroundColor: '#D1D5DB', marginVertical: 8 }} />
+        <TouchableOpacity
+          onPress={() => setTab('manual')}
+          style={{
+            flex: 1, paddingVertical: 12, borderRadius: 50, alignItems: 'center',
+            backgroundColor: tab === 'manual' ? '#F5C518' : 'transparent',
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ fontWeight: '700', color: tab === 'manual' ? '#1C2B3A' : '#6B7280', fontSize: 14 }}>
+            Manual Input
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {tab === 'scan' ? (
+        <ScanTab onCapture={handleCapture} />
+      ) : (
+        <ManualTab onDone={(input) => { setBillInput(input); router.push('/bill-decoder') }} />
+      )}
+    </View>
+  )
+}
+
+function ScanTab({ onCapture }: { onCapture: (fromCamera: boolean) => void }) {
+  return (
+    <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
+      {/* Dashed upload zone */}
+      <TouchableOpacity
+        onPress={() => onCapture(false)}
+        activeOpacity={0.8}
+        style={{
+          borderWidth: 2,
+          borderColor: '#F5C518',
+          borderStyle: 'dashed',
+          borderRadius: 20,
+          paddingVertical: 48,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          backgroundColor: '#FFFBEA',
+        }}
+      >
+        <Text style={{ fontSize: 48, color: '#F5C518' }}>📷</Text>
+        <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '700' }}>I-upload ang bill mo</Text>
+        <Text style={{ color: '#9CA3AF', fontSize: 13, textAlign: 'center', paddingHorizontal: 20 }}>
+          Awtomatikong babasahin ng AI ang mga charges.
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => onCapture(true)}
+        style={{ marginTop: 12, paddingVertical: 12, alignItems: 'center' }}
+        activeOpacity={0.7}
+      >
+        <Text style={{ color: '#9CA3AF', fontSize: 13 }}>o kaya, buksan ang camera →</Text>
+      </TouchableOpacity>
+
+      {/* KoKo at bottom with analyze button */}
+      <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 32, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', width: '100%' }}>
+          <View style={{ flex: 1 }} />
+          <Text style={{ fontSize: 56, marginRight: -8, marginBottom: -4 }}>🦉</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => onCapture(false)}
+          style={{
+            backgroundColor: '#1C2B3A', borderRadius: 50,
+            paddingVertical: 18, width: '100%', alignItems: 'center',
+          }}
+          activeOpacity={0.85}
+        >
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 1 }}>
+            I-ANANLYZE ANG BILL KO
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+}
+
+function ManualTab({ onDone }: { onDone: (input: Partial<BillInput>) => void }) {
+  const [totalAmount, setTotalAmount] = useState('')
+  const [kwh, setKwh] = useState('')
+  const [city, setCity] = useState('')
+  const [barangay, setBarangay] = useState('')
+  const [isSubMeter, setIsSubMeter] = useState(false)
+  const [cityOpen, setCityOpen] = useState(false)
+
+  function handleSubmit() {
+    const amount = parseFloat(totalAmount)
+    const kwhNum = parseFloat(kwh)
+    if (isNaN(amount) || isNaN(kwhNum) || amount <= 0 || kwhNum <= 0) {
+      Alert.alert('Mali ang input', 'Siguraduhing tama ang mga numero.')
+      return
+    }
+    onDone({ totalAmount: amount, kwh: kwhNum, city })
+  }
+
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={{ color: '#6B7280', fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
+        o kaya naman, i-type mismo ang halaga
+      </Text>
+
+      {/* Total bill */}
+      <FormField label="Kabuuang halaga ng bill" hint="?" />
+      <TextInput
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+        placeholder="₱ 0.00"
+        placeholderTextColor="#D1D5DB"
+        keyboardType="decimal-pad"
+        value={totalAmount}
+        onChangeText={setTotalAmount}
+      />
+
+      <FormField label="Kiloawatts na nagamit (kWh)" hint="?" />
+      <TextInput
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+        placeholder="0"
+        placeholderTextColor="#D1D5DB"
+        keyboardType="number-pad"
+        value={kwh}
+        onChangeText={setKwh}
+      />
+
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>Lungsod</Text>
+      <TextInput
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+        placeholder="Caloocan, Quezon City..."
+        placeholderTextColor="#D1D5DB"
+        value={city}
+        onChangeText={setCity}
+      />
+
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>Barangay</Text>
+      <TouchableOpacity
+        onPress={() => setCityOpen(!cityOpen)}
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+      >
+        <Text style={{ color: barangay ? '#1C2B3A' : '#D1D5DB', fontSize: 16 }}>
+          {barangay || 'Piliin ang barangay...'}
+        </Text>
+        <Text style={{ color: '#9CA3AF' }}>{cityOpen ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {/* Sub-meter checkbox */}
+      <TouchableOpacity
+        onPress={() => setIsSubMeter(!isSubMeter)}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 }}
+        activeOpacity={0.8}
+      >
+        <View style={{
+          width: 22, height: 22, borderRadius: 4, borderWidth: 2,
+          borderColor: isSubMeter ? '#F5C518' : '#D1D5DB',
+          backgroundColor: isSubMeter ? '#F5C518' : '#fff',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {isSubMeter && <Text style={{ color: '#1C2B3A', fontSize: 14, fontWeight: '900' }}>✓</Text>}
+        </View>
+        <Text style={{ color: '#1C2B3A', fontSize: 14, fontWeight: '500' }}>Sub-meter ba ang gamit mo?</Text>
+      </TouchableOpacity>
+
+      {/* KoKo with speech bubble */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 16 }}>
+        <Text style={{ fontSize: 48 }}>🦉</Text>
+        <View style={{
+          flex: 1, backgroundColor: '#F5C518', borderRadius: 12,
+          borderBottomLeftRadius: 4, padding: 10, marginLeft: 10,
+        }}>
+          <Text style={{ color: '#1C2B3A', fontSize: 12, fontWeight: '600' }}>
+            Siguraduhing tama ang mga numero para sa mas accurate na analysis!
+          </Text>
+        </View>
+      </View>
+
+      {/* Analyze button */}
+      <TouchableOpacity
+        onPress={handleSubmit}
+        style={{ backgroundColor: '#1C2B3A', borderRadius: 50, paddingVertical: 18, alignItems: 'center' }}
+        activeOpacity={0.85}
+      >
+        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 1 }}>
+          I-ANALYZE ANG BILL KO
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
+  )
+}
+
+function FormField({ label, hint }: { label: string; hint?: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14 }}>{label}</Text>
+      {hint && (
+        <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#F5C518', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#1C2B3A', fontSize: 11, fontWeight: '800' }}>?</Text>
+        </View>
+      )}
+    </View>
   )
 }
 
@@ -163,151 +379,80 @@ function ConfirmScreen({
   const [cityOpen, setCityOpen] = useState(false)
 
   return (
-    <ScrollView className="flex-1 bg-stone-50" contentContainerClassName="px-6 py-8">
-      <Text className="text-stone-800 text-2xl font-bold mb-1">Tama ba ito?</Text>
-      <Text className="text-stone-500 text-sm mb-6">I-edit kung mali ang na-extract mula sa iyong bill.</Text>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24 }}>
+      <Text style={{ color: '#1C2B3A', fontSize: 22, fontWeight: '800', marginBottom: 4 }}>Tama ba ito?</Text>
+      <Text style={{ color: '#9CA3AF', fontSize: 13, marginBottom: 20 }}>
+        I-edit kung mali ang na-extract mula sa iyong bill.
+      </Text>
 
-      {/* City — always shown, OCR rarely extracts this */}
-      <View className="mb-4">
-        <Text className="text-stone-600 text-sm font-medium mb-1">Lungsod / Munisipyo</Text>
-        <TouchableOpacity
-          className={`flex-row items-center justify-between bg-white border-2 rounded-xl px-4 py-3 ${
-            extracted.city ? 'border-brand-orange' : 'border-stone-200'
-          }`}
-          onPress={() => setCityOpen(!cityOpen)}
-          activeOpacity={0.8}
-        >
-          <Text className={extracted.city ? 'text-stone-900 text-base font-semibold' : 'text-stone-400 text-base'}>
-            {extracted.city || 'Piliin ang lungsod...'}
-          </Text>
-          <Text className="text-stone-400">{cityOpen ? '▲' : '▼'}</Text>
-        </TouchableOpacity>
-        {cityOpen && (
-          <View className="bg-white border-2 border-stone-200 rounded-xl mt-1 overflow-hidden shadow-sm max-h-48">
-            <ScrollView nestedScrollEnabled>
-              {METRO_MANILA_CITIES.map((city) => (
-                <TouchableOpacity
-                  key={city}
-                  className={`px-4 py-3 border-b border-stone-100 ${extracted.city === city ? 'bg-orange-50' : ''}`}
-                  onPress={() => {
-                    onExtractedChange({ ...extracted, city })
-                    setCityOpen(false)
-                  }}
-                >
-                  <Text className={`text-base ${extracted.city === city ? 'text-brand-orange font-semibold' : 'text-stone-700'}`}>
-                    {city}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-        {!extracted.city && (
-          <Text className="text-amber-500 text-xs mt-1">⚠️ Piliin ang lungsod para sa tamang paghahambing</Text>
-        )}
-      </View>
+      {/* City picker */}
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>Lungsod / Munisipyo</Text>
+      <TouchableOpacity
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, borderWidth: 2, borderColor: extracted.city ? '#F5C518' : '#E5E7EB' }}
+        onPress={() => setCityOpen(!cityOpen)}
+        activeOpacity={0.8}
+      >
+        <Text style={{ color: extracted.city ? '#1C2B3A' : '#D1D5DB', fontSize: 16 }}>
+          {extracted.city || 'Piliin ang lungsod...'}
+        </Text>
+        <Text style={{ color: '#9CA3AF' }}>{cityOpen ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+      {cityOpen && (
+        <View style={{ backgroundColor: '#fff', borderRadius: 14, marginBottom: 12, overflow: 'hidden', maxHeight: 160, borderWidth: 2, borderColor: '#E5E7EB' }}>
+          <ScrollView nestedScrollEnabled>
+            {METRO_MANILA_CITIES.map((c) => (
+              <TouchableOpacity
+                key={c}
+                style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', backgroundColor: extracted.city === c ? '#FFFBEA' : '#fff' }}
+                onPress={() => { onExtractedChange({ ...extracted, city: c }); setCityOpen(false) }}
+              >
+                <Text style={{ color: extracted.city === c ? '#F5C518' : '#374151', fontWeight: extracted.city === c ? '700' : '400', fontSize: 15 }}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
-      <ConfirmField
-        label="Charges for this Billing Period (₱)"
+      <ConfirmInputField
+        label="Total Bill (₱)"
         value={extracted.totalAmount?.toString() ?? ''}
-        prefix="₱"
+        keyboardType="decimal-pad"
         onChange={(v) => onExtractedChange({ ...extracted, totalAmount: parseFloat(v) || 0 })}
       />
-      <ConfirmField
+      <ConfirmInputField
         label="kWh Consumed"
         value={extracted.kwh?.toString() ?? ''}
-        suffix="kWh"
+        keyboardType="number-pad"
         onChange={(v) => onExtractedChange({ ...extracted, kwh: parseFloat(v) || 0 })}
       />
-      {extracted.ratePerKwh !== undefined && (
-        <ConfirmField
-          label="Rate this Month (₱/kWh)"
-          value={extracted.ratePerKwh.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, ratePerKwh: parseFloat(v) || 0 })}
-        />
-      )}
-      {extracted.generationCharge !== undefined && (
-        <ConfirmField
-          label="Generation Charge (₱)"
-          value={extracted.generationCharge.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, generationCharge: parseFloat(v) || 0 })}
-        />
-      )}
-      {extracted.transmissionCharge !== undefined && (
-        <ConfirmField
-          label="Transmission Charge (₱)"
-          value={extracted.transmissionCharge.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, transmissionCharge: parseFloat(v) || 0 })}
-        />
-      )}
-      {extracted.systemLossCharge !== undefined && (
-        <ConfirmField
-          label="System Loss Charge (₱)"
-          value={extracted.systemLossCharge.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, systemLossCharge: parseFloat(v) || 0 })}
-        />
-      )}
-      {extracted.distributionCharge !== undefined && (
-        <ConfirmField
-          label="Distribution Charge (₱)"
-          value={extracted.distributionCharge.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, distributionCharge: parseFloat(v) || 0 })}
-        />
-      )}
-      {extracted.taxes !== undefined && (
-        <ConfirmField
-          label="Government Taxes / VAT (₱)"
-          value={extracted.taxes.toString()}
-          prefix="₱"
-          onChange={(v) => onExtractedChange({ ...extracted, taxes: parseFloat(v) || 0 })}
-        />
-      )}
 
       <TouchableOpacity
-        className="bg-brand-orange rounded-2xl py-5 items-center mt-4 shadow-sm"
+        style={{ backgroundColor: '#F5C518', borderRadius: 50, paddingVertical: 18, alignItems: 'center', marginTop: 8 }}
         onPress={onConfirm}
         activeOpacity={0.85}
       >
-        <Text className="text-white text-xl font-bold">Tama Na! I-analyze ⚡</Text>
+        <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 }}>Tama Na! I-analyze ⚡</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        className="py-4 items-center mt-2"
-        onPress={onRescan}
-      >
-        <Text className="text-stone-500 text-base">Mag-scan ulit</Text>
+      <TouchableOpacity style={{ paddingVertical: 14, alignItems: 'center' }} onPress={onRescan}>
+        <Text style={{ color: '#9CA3AF', fontSize: 14 }}>Mag-scan ulit</Text>
       </TouchableOpacity>
     </ScrollView>
   )
 }
 
-interface ConfirmFieldProps {
-  label: string
-  value: string
-  prefix?: string
-  suffix?: string
-  onChange: (v: string) => void
-}
-
-function ConfirmField({ label, value, prefix, suffix, onChange }: ConfirmFieldProps) {
+function ConfirmInputField({ label, value, keyboardType, onChange }: {
+  label: string; value: string; keyboardType?: any; onChange: (v: string) => void
+}) {
   return (
-    <View className="mb-4">
-      <Text className="text-stone-600 text-sm font-medium mb-1">{label}</Text>
-      <View className="flex-row items-center bg-white border-2 border-stone-200 rounded-xl px-4 py-3 gap-2">
-        {prefix && <Text className="text-stone-500 font-bold">{prefix}</Text>}
-        <TextInput
-          className="flex-1 text-stone-900 text-lg font-semibold"
-          value={value}
-          onChangeText={onChange}
-          keyboardType="decimal-pad"
-        />
-        {suffix && <Text className="text-stone-500 font-bold">{suffix}</Text>}
-      </View>
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>{label}</Text>
+      <TextInput
+        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', borderWidth: 2, borderColor: '#E5E7EB' }}
+        value={value}
+        onChangeText={onChange}
+        keyboardType={keyboardType ?? 'default'}
+      />
     </View>
   )
 }

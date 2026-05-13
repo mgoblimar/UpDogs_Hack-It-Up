@@ -1,17 +1,9 @@
 import { useState } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from 'react-native'
+import { View, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { Text, TextInput } from '@/components/CustomText'
 
 type Mode = 'signin' | 'signup'
 
@@ -50,7 +42,7 @@ export default function SignInScreen() {
       return
     }
 
-    router.replace('/')
+    router.replace('/home')
   }
 
   async function handleSignUp() {
@@ -83,14 +75,14 @@ export default function SignInScreen() {
       return
     }
 
-    router.replace('/')
+    router.replace('/home')
   }
 
   async function handleSkip() {
     if (isSupabaseConfigured) {
       await supabase.auth.signInAnonymously()
     }
-    router.replace('/')
+    router.replace('/home')
   }
 
   return (
@@ -105,12 +97,13 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Logo */}
-          <View className="bg-brand-orange rounded-3xl w-20 h-20 items-center justify-center mb-6 shadow-lg">
-            <Text className="text-4xl">⚡</Text>
+          <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: '#1C2B3A', alignItems: 'center', justifyContent: 'center', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+            <Text style={{ fontSize: 36 }}>⚡</Text>
+            <Text style={{ color: '#F5C518', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: -4 }}>KK</Text>
           </View>
 
-          <Text className="text-stone-800 text-3xl font-bold text-center">KuryenteKo</Text>
-          <Text className="text-stone-500 text-base text-center mt-2 mb-10">
+          <Text style={{ color: '#1C2B3A', fontSize: 30, fontWeight: '900', textAlign: 'center' }}>KuryenteKo</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 15, textAlign: 'center', marginTop: 6, marginBottom: 36 }}>
             I-analyze ang iyong electricity bill at alamin kung na-overcharge ka.
           </Text>
 
@@ -148,7 +141,7 @@ export default function SignInScreen() {
               <TouchableOpacity
                 onPress={mode === 'signin' ? handleSignIn : handleSignUp}
                 disabled={loading}
-                className="bg-brand-orange rounded-2xl py-4 w-full items-center"
+                style={{ backgroundColor: '#1C2B3A', borderRadius: 14, paddingVertical: 16, width: '100%', alignItems: 'center' }}
                 activeOpacity={0.85}
               >
                 {loading ? (
@@ -162,10 +155,10 @@ export default function SignInScreen() {
 
               <TouchableOpacity
                 onPress={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null) }}
-                className="mt-2 py-2"
+                style={{ marginTop: 8, paddingVertical: 8 }}
                 activeOpacity={0.7}
               >
-                <Text className="text-brand-orange text-sm text-center font-medium">
+                <Text style={{ color: '#F5C518', fontSize: 14, textAlign: 'center', fontWeight: '600' }}>
                   {mode === 'signin' ? 'Wala pang account? Mag-sign up →' : 'May account na? Mag-sign in →'}
                 </Text>
               </TouchableOpacity>

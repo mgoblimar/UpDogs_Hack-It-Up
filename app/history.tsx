@@ -1,15 +1,10 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useHistoryStore } from '@/store/historyStore'
 import { useBillStore } from '@/store/billStore'
 import type { BillRecord } from '@/types/bill'
+import { Text } from '@/components/CustomText'
 
 export default function HistoryScreen() {
   const router = useRouter()

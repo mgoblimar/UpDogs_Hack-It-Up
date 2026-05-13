@@ -1,5 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native'
+import { View, ScrollView, TouchableOpacity, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Text } from '@/components/CustomText'
 
 function Step({ number, title, body }: { number: string; title: string; body: string }) {
   return (

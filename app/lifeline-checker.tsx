@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, ScrollView, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useBillStore } from '@/store/billStore'
+import { Text } from '@/components/CustomText'
 
 const LIFELINE_BRACKETS = [
   { range: '0–10 kWh', discount: '100%', note: 'Libre ang kuryente' },
