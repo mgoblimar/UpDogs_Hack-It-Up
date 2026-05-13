@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { Text, TextInput } from '@/components/CustomText'
+import IconLogo from '@/assets/KuryenteKo/icon-logo.svg'
+import { OutlineButton } from '@/components/Buttons'
 
 type Mode = 'signin' | 'signup'
 
@@ -97,9 +99,8 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Logo */}
-          <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: '#1C2B3A', alignItems: 'center', justifyContent: 'center', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
-            <Text style={{ fontSize: 36 }}>⚡</Text>
-            <Text style={{ color: '#F5C518', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginTop: -4 }}>KK</Text>
+          <View style={{ marginBottom: -50, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+            <IconLogo width={180} height={180} />
           </View>
 
           <Text style={{ color: '#1C2B3A', fontSize: 30, fontWeight: '900', textAlign: 'center' }}>KuryenteKo</Text>
@@ -168,6 +169,14 @@ export default function SignInScreen() {
                   Gamitin nang walang account →
                 </Text>
               </TouchableOpacity>
+
+              {/* Test button to go back to onboarding */}
+              <View style={{ marginTop: 20 }}>
+                <OutlineButton 
+                  label="Go Back to Onboarding (Test)" 
+                  onPress={() => router.replace('/onboarding')} 
+                />
+              </View>
             </>
         </ScrollView>
       </KeyboardAvoidingView>
