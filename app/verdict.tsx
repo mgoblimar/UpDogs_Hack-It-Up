@@ -5,20 +5,44 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native'
+import { useEffect, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
+import { useHistoryStore } from '@/store/historyStore'
 
 export default function VerdictScreen() {
   const router = useRouter()
   const verdict = useBillStore((s) => s.verdict)
   const billInput = useBillStore((s) => s.billInput)
   const reset = useBillStore((s) => s.reset)
+  const addBill = useHistoryStore((s) => s.addBill)
+  const savedRef = useRef(false)
 
-  if (!verdict || !billInput) {
-    router.replace('/')
-    return null
-  }
+  useEffect(() => {
+    if (!verdict || !billInput) {
+      router.replace('/')
+      return
+    }
+    if (savedRef.current) return
+    savedRef.current = true
+    addBill({
+      id: `${billInput.city ?? ''}-${billInput.totalAmount ?? 0}-${billInput.kwh ?? 0}`,
+      date: new Date().toISOString(),
+      city: billInput.city ?? '',
+      totalAmount: billInput.totalAmount ?? 0,
+      kwh: billInput.kwh ?? 0,
+      ratePerKwh: verdict.userRatePerKwh,
+      verdict: {
+        status: verdict.status,
+        overchargeAmount: verdict.overchargeAmount,
+        userRatePerKwh: verdict.userRatePerKwh,
+        ercMaxRatePerKwh: verdict.ercMaxRatePerKwh,
+      },
+    })
+  }, [verdict, billInput])
+
+  if (!verdict || !billInput) return null
 
   const isOvercharged = verdict.status === 'overcharged'
   const isHigh = verdict.status === 'high'

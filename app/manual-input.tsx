@@ -19,6 +19,11 @@ interface ManualFormData {
   totalAmount: string
   kwh: string
   city: string
+  generationCharge: string
+  transmissionCharge: string
+  systemLossCharge: string
+  distributionCharge: string
+  taxes: string
 }
 
 export default function ManualInputScreen() {
@@ -26,8 +31,14 @@ export default function ManualInputScreen() {
   const setBillInput = useBillStore((s) => s.setBillInput)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
 
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ManualFormData>({
-    defaultValues: { totalAmount: '', kwh: '', city: '' },
+    defaultValues: {
+      totalAmount: '', kwh: '', city: '',
+      generationCharge: '', transmissionCharge: '',
+      systemLossCharge: '', distributionCharge: '', taxes: '',
+    },
   })
 
   const selectedCity = watch('city')
@@ -41,10 +52,17 @@ export default function ManualInputScreen() {
       return
     }
 
+    const parse = (v: string) => { const n = parseFloat(v); return isNaN(n) ? undefined : n }
+
     const billInput: Partial<BillInput> = {
       totalAmount,
       kwh,
       city: data.city,
+      generationCharge: parse(data.generationCharge),
+      transmissionCharge: parse(data.transmissionCharge),
+      systemLossCharge: parse(data.systemLossCharge),
+      distributionCharge: parse(data.distributionCharge),
+      taxes: parse(data.taxes),
     }
 
     setBillInput(billInput)
@@ -156,6 +174,54 @@ export default function ManualInputScreen() {
             </View>
           )}
         </View>
+
+        {/* Advanced charges — optional */}
+        <TouchableOpacity
+          onPress={() => setAdvancedOpen(!advancedOpen)}
+          className="flex-row items-center justify-between py-3 mb-2"
+          activeOpacity={0.7}
+        >
+          <Text className="text-stone-500 text-sm font-medium">
+            📋 May breakdown ng charges? (opsyonal)
+          </Text>
+          <Text className="text-stone-400 text-sm">{advancedOpen ? '▲ Itago' : '▼ Ipakita'}</Text>
+        </TouchableOpacity>
+
+        {advancedOpen && (
+          <View className="bg-stone-100 rounded-2xl p-4 mb-6 gap-4">
+            <Text className="text-stone-400 text-xs">
+              Makikita sa detalye ng iyong bill. Hindi required — para sa mas tumpak na analysis.
+            </Text>
+            {[
+              { name: 'generationCharge' as const, label: 'Generation Charge' },
+              { name: 'transmissionCharge' as const, label: 'Transmission Charge' },
+              { name: 'systemLossCharge' as const, label: 'System Loss Charge' },
+              { name: 'distributionCharge' as const, label: 'Distribution Charge' },
+              { name: 'taxes' as const, label: 'Government Taxes / VAT' },
+            ].map(({ name, label }) => (
+              <View key={name}>
+                <Text className="text-stone-600 text-xs font-medium mb-1">{label} (₱)</Text>
+                <Controller
+                  control={control}
+                  name={name}
+                  render={({ field: { onChange, value } }) => (
+                    <View className="flex-row items-center bg-white border border-stone-200 rounded-xl px-4 py-3 gap-2">
+                      <Text className="text-stone-400 font-bold">₱</Text>
+                      <TextInput
+                        className="flex-1 text-stone-900 text-base"
+                        placeholder="0.00"
+                        placeholderTextColor="#D6D3D1"
+                        keyboardType="decimal-pad"
+                        value={value}
+                        onChangeText={onChange}
+                      />
+                    </View>
+                  )}
+                />
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Submit */}
         <TouchableOpacity

@@ -33,3 +33,18 @@ export interface VerdictResult {
   cityAverageAmount?: number
   lineItems: LineItem[]
 }
+
+export interface BillRecord {
+  id: string
+  date: string
+  city: string
+  totalAmount: number
+  kwh: number
+  ratePerKwh: number
+  verdict: {
+    status: VerdictStatus
+    overchargeAmount: number
+    userRatePerKwh: number
+    ercMaxRatePerKwh: number
+  }
+}

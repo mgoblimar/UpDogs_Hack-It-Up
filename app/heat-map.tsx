@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import WebView from 'react-native-webview'
+import MapView, { Marker, UrlTile } from 'react-native-maps'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useBillStore } from '@/store/billStore'
 
@@ -69,45 +69,11 @@ const STATUS_CONFIG = {
   high: { bg: 'bg-red-100', border: 'border-red-300', dot: 'bg-red-500', label: 'Mataas', text: 'text-red-700' },
 }
 
-function buildLeafletHtml(rows: CityRow[], userCity: string | null): string {
-  const markers = rows
-    .filter((r) => CITY_COORDS[r.city])
-    .map((r) => {
-      const [lat, lng] = CITY_COORDS[r.city]
-      const color = STATUS_COLORS[r.status] ?? STATUS_COLORS.medium
-      const isUser = userCity?.toLowerCase().trim() === r.city.toLowerCase().trim()
-      const popup = `<b>${r.city}</b>${isUser ? ' 📍' : ''}<br>Avg: ₱${r.average_amount.toLocaleString()}<br>${r.report_count} report${r.report_count !== 1 ? 's' : ''}`
-      return `L.circleMarker([${lat},${lng}], {
-        radius: ${isUser ? 14 : 10},
-        fillColor: "${color}",
-        color: "${isUser ? '#F97316' : '#fff'}",
-        weight: ${isUser ? 3 : 2},
-        opacity: 1,
-        fillOpacity: 0.85
-      }).bindPopup("${popup}").addTo(map);`
-    })
-    .join('\n')
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-  html, body, #map { height: 100%; margin: 0; padding: 0; }
-  .leaflet-popup-content { font-family: sans-serif; font-size: 13px; }
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([14.55, 121.02], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  ${markers}
-</script>
-</body>
-</html>`
+interface UserBillMarker {
+  city: string
+  totalAmount: number
+  kwh: number
+  status: string
 }
 
 function kwh_range(kwh: number): string {
@@ -162,7 +128,7 @@ export default function HeatMapScreen() {
   const [submitMsg, setSubmitMsg] = useState<string | null>(null)
 
   const hasOwnBill = !!(billInput?.city && billInput.kwh && billInput.totalAmount && verdict)
-  const userCity = billInput?.city ?? null
+  const userCity = billInput?.city ?? null  // used in list tab highlight
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -200,7 +166,18 @@ export default function HeatMapScreen() {
   }
 
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
-  const mapHtml = buildLeafletHtml(rows, userCity)
+  const userBillMarker: UserBillMarker | null =
+    billInput?.city && billInput.totalAmount && billInput.kwh && verdict
+      ? { city: billInput.city, totalAmount: billInput.totalAmount, kwh: billInput.kwh, status: verdict.status }
+      : null
+
+  const userCoords = userBillMarker ? CITY_COORDS[userBillMarker.city] : null
+  const initialRegion = {
+    latitude: userCoords ? userCoords[0] : 14.5547,
+    longitude: userCoords ? userCoords[1] : 121.0244,
+    latitudeDelta: 0.35,
+    longitudeDelta: 0.35,
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-stone-50" edges={['bottom']}>
@@ -227,21 +204,43 @@ export default function HeatMapScreen() {
 
       {/* Full-screen map tab */}
       {activeTab === 'map' && (
-        <View className="flex-1 bg-stone-200">
+        <View className="flex-1">
           {loading ? (
-            <View className="flex-1 items-center justify-center">
+            <View className="flex-1 items-center justify-center bg-stone-100">
               <ActivityIndicator color="#F97316" size="large" />
               <Text className="text-stone-400 text-sm mt-3">Kino-load ang mapa...</Text>
             </View>
           ) : (
-            <WebView
-              source={{ html: mapHtml }}
-              style={{ flex: 1 }}
-              scrollEnabled={false}
-              originWhitelist={['*']}
-              javaScriptEnabled
-            />
+            <MapView style={{ flex: 1 }} initialRegion={initialRegion}>
+              <UrlTile
+                urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maximumZ={19}
+                flipY={false}
+              />
+
+              {/* Community city markers */}
+              {rows.filter((r) => CITY_COORDS[r.city]).map((r) => (
+                <Marker
+                  key={r.city}
+                  coordinate={{ latitude: CITY_COORDS[r.city][0], longitude: CITY_COORDS[r.city][1] }}
+                  title={r.city}
+                  description={`Avg: ₱${r.average_amount.toLocaleString()} · ${r.report_count} report${r.report_count !== 1 ? 's' : ''}`}
+                  pinColor={STATUS_COLORS[r.status] ?? STATUS_COLORS.medium}
+                />
+              ))}
+
+              {/* Personal bill marker */}
+              {userBillMarker && userCoords && (
+                <Marker
+                  coordinate={{ latitude: userCoords[0], longitude: userCoords[1] }}
+                  title={`📍 ${userBillMarker.city} — Iyong Bill`}
+                  description={`₱${userBillMarker.totalAmount.toLocaleString()} · ${userBillMarker.kwh} kWh`}
+                  pinColor="#F97316"
+                />
+              )}
+            </MapView>
           )}
+
           {/* Legend overlay */}
           <View className="absolute bottom-4 right-4 bg-white/95 rounded-2xl px-4 py-3 flex-row gap-4 shadow-sm">
             {(['low', 'medium', 'high'] as const).map((s) => (
@@ -251,6 +250,7 @@ export default function HeatMapScreen() {
               </View>
             ))}
           </View>
+
           {/* Report count badge */}
           {rows.length > 0 && (
             <View className="absolute top-4 left-4 bg-white/95 rounded-2xl px-3 py-2 shadow-sm">

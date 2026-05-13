@@ -99,86 +99,12 @@ export default function ScannerScreen() {
 
   if (scanState === 'confirm') {
     return (
-      <ScrollView className="flex-1 bg-stone-50" contentContainerClassName="px-6 py-8">
-        <Text className="text-stone-800 text-2xl font-bold mb-1">Tama ba ito?</Text>
-        <Text className="text-stone-500 text-sm mb-6">I-edit kung mali ang na-extract mula sa iyong bill.</Text>
-
-        <ConfirmField
-          label="Charges for this Billing Period (₱)"
-          value={extracted.totalAmount?.toString() ?? ''}
-          prefix="₱"
-          onChange={(v) => setExtracted({ ...extracted, totalAmount: parseFloat(v) || 0 })}
-        />
-        <ConfirmField
-          label="kWh Consumed"
-          value={extracted.kwh?.toString() ?? ''}
-          suffix="kWh"
-          onChange={(v) => setExtracted({ ...extracted, kwh: parseFloat(v) || 0 })}
-        />
-        {extracted.ratePerKwh !== undefined && (
-          <ConfirmField
-            label="Rate this Month (₱/kWh)"
-            value={extracted.ratePerKwh.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, ratePerKwh: parseFloat(v) || 0 })}
-          />
-        )}
-        {extracted.generationCharge !== undefined && (
-          <ConfirmField
-            label="Generation Charge (₱)"
-            value={extracted.generationCharge.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, generationCharge: parseFloat(v) || 0 })}
-          />
-        )}
-        {extracted.transmissionCharge !== undefined && (
-          <ConfirmField
-            label="Transmission Charge (₱)"
-            value={extracted.transmissionCharge.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, transmissionCharge: parseFloat(v) || 0 })}
-          />
-        )}
-        {extracted.systemLossCharge !== undefined && (
-          <ConfirmField
-            label="System Loss Charge (₱)"
-            value={extracted.systemLossCharge.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, systemLossCharge: parseFloat(v) || 0 })}
-          />
-        )}
-        {extracted.distributionCharge !== undefined && (
-          <ConfirmField
-            label="Distribution Charge (₱)"
-            value={extracted.distributionCharge.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, distributionCharge: parseFloat(v) || 0 })}
-          />
-        )}
-        {extracted.taxes !== undefined && (
-          <ConfirmField
-            label="Government Taxes / VAT (₱)"
-            value={extracted.taxes.toString()}
-            prefix="₱"
-            onChange={(v) => setExtracted({ ...extracted, taxes: parseFloat(v) || 0 })}
-          />
-        )}
-
-        <TouchableOpacity
-          className="bg-brand-orange rounded-2xl py-5 items-center mt-4 shadow-sm"
-          onPress={handleConfirm}
-          activeOpacity={0.85}
-        >
-          <Text className="text-white text-xl font-bold">Tama Na! I-analyze ⚡</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="py-4 items-center mt-2"
-          onPress={() => setScanState('idle')}
-        >
-          <Text className="text-stone-500 text-base">Mag-scan ulit</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <ConfirmScreen
+        extracted={extracted}
+        onExtractedChange={setExtracted}
+        onConfirm={handleConfirm}
+        onRescan={() => setScanState('idle')}
+      />
     )
   }
 
@@ -220,6 +146,143 @@ export default function ScannerScreen() {
         </View>
       </View>
     </SafeAreaView>
+  )
+}
+
+function ConfirmScreen({
+  extracted,
+  onExtractedChange,
+  onConfirm,
+  onRescan,
+}: {
+  extracted: Partial<BillInput>
+  onExtractedChange: (v: Partial<BillInput>) => void
+  onConfirm: () => void
+  onRescan: () => void
+}) {
+  const [cityOpen, setCityOpen] = useState(false)
+
+  return (
+    <ScrollView className="flex-1 bg-stone-50" contentContainerClassName="px-6 py-8">
+      <Text className="text-stone-800 text-2xl font-bold mb-1">Tama ba ito?</Text>
+      <Text className="text-stone-500 text-sm mb-6">I-edit kung mali ang na-extract mula sa iyong bill.</Text>
+
+      {/* City — always shown, OCR rarely extracts this */}
+      <View className="mb-4">
+        <Text className="text-stone-600 text-sm font-medium mb-1">Lungsod / Munisipyo</Text>
+        <TouchableOpacity
+          className={`flex-row items-center justify-between bg-white border-2 rounded-xl px-4 py-3 ${
+            extracted.city ? 'border-brand-orange' : 'border-stone-200'
+          }`}
+          onPress={() => setCityOpen(!cityOpen)}
+          activeOpacity={0.8}
+        >
+          <Text className={extracted.city ? 'text-stone-900 text-base font-semibold' : 'text-stone-400 text-base'}>
+            {extracted.city || 'Piliin ang lungsod...'}
+          </Text>
+          <Text className="text-stone-400">{cityOpen ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+        {cityOpen && (
+          <View className="bg-white border-2 border-stone-200 rounded-xl mt-1 overflow-hidden shadow-sm max-h-48">
+            <ScrollView nestedScrollEnabled>
+              {METRO_MANILA_CITIES.map((city) => (
+                <TouchableOpacity
+                  key={city}
+                  className={`px-4 py-3 border-b border-stone-100 ${extracted.city === city ? 'bg-orange-50' : ''}`}
+                  onPress={() => {
+                    onExtractedChange({ ...extracted, city })
+                    setCityOpen(false)
+                  }}
+                >
+                  <Text className={`text-base ${extracted.city === city ? 'text-brand-orange font-semibold' : 'text-stone-700'}`}>
+                    {city}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+        {!extracted.city && (
+          <Text className="text-amber-500 text-xs mt-1">⚠️ Piliin ang lungsod para sa tamang paghahambing</Text>
+        )}
+      </View>
+
+      <ConfirmField
+        label="Charges for this Billing Period (₱)"
+        value={extracted.totalAmount?.toString() ?? ''}
+        prefix="₱"
+        onChange={(v) => onExtractedChange({ ...extracted, totalAmount: parseFloat(v) || 0 })}
+      />
+      <ConfirmField
+        label="kWh Consumed"
+        value={extracted.kwh?.toString() ?? ''}
+        suffix="kWh"
+        onChange={(v) => onExtractedChange({ ...extracted, kwh: parseFloat(v) || 0 })}
+      />
+      {extracted.ratePerKwh !== undefined && (
+        <ConfirmField
+          label="Rate this Month (₱/kWh)"
+          value={extracted.ratePerKwh.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, ratePerKwh: parseFloat(v) || 0 })}
+        />
+      )}
+      {extracted.generationCharge !== undefined && (
+        <ConfirmField
+          label="Generation Charge (₱)"
+          value={extracted.generationCharge.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, generationCharge: parseFloat(v) || 0 })}
+        />
+      )}
+      {extracted.transmissionCharge !== undefined && (
+        <ConfirmField
+          label="Transmission Charge (₱)"
+          value={extracted.transmissionCharge.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, transmissionCharge: parseFloat(v) || 0 })}
+        />
+      )}
+      {extracted.systemLossCharge !== undefined && (
+        <ConfirmField
+          label="System Loss Charge (₱)"
+          value={extracted.systemLossCharge.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, systemLossCharge: parseFloat(v) || 0 })}
+        />
+      )}
+      {extracted.distributionCharge !== undefined && (
+        <ConfirmField
+          label="Distribution Charge (₱)"
+          value={extracted.distributionCharge.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, distributionCharge: parseFloat(v) || 0 })}
+        />
+      )}
+      {extracted.taxes !== undefined && (
+        <ConfirmField
+          label="Government Taxes / VAT (₱)"
+          value={extracted.taxes.toString()}
+          prefix="₱"
+          onChange={(v) => onExtractedChange({ ...extracted, taxes: parseFloat(v) || 0 })}
+        />
+      )}
+
+      <TouchableOpacity
+        className="bg-brand-orange rounded-2xl py-5 items-center mt-4 shadow-sm"
+        onPress={onConfirm}
+        activeOpacity={0.85}
+      >
+        <Text className="text-white text-xl font-bold">Tama Na! I-analyze ⚡</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        className="py-4 items-center mt-2"
+        onPress={onRescan}
+      >
+        <Text className="text-stone-500 text-base">Mag-scan ulit</Text>
+      </TouchableOpacity>
+    </ScrollView>
   )
 }
 

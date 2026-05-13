@@ -41,6 +41,7 @@ export default function RootLayout() {
         <Stack.Screen name="dti-report" options={{ title: 'Report sa DTI' }} />
         <Stack.Screen name="chat" options={{ title: 'Tanungin ang KuryenteKo AI' }} />
         <Stack.Screen name="heat-map" options={{ title: 'Community Heat Map' }} />
+        <Stack.Screen name="history" options={{ title: 'Kasaysayan ng Bill' }} />
       </Stack>
     </>
   )

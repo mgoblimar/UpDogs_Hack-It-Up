@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, Redirect } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
+import { useHistoryStore } from '@/store/historyStore'
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
@@ -9,6 +10,7 @@ import type { Session } from '@supabase/supabase-js'
 export default function HomeScreen() {
   const router = useRouter()
   const reset = useBillStore((s) => s.reset)
+  const loadHistory = useHistoryStore((s) => s.loadForUser)
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
@@ -19,9 +21,15 @@ export default function HomeScreen() {
       return
     }
 
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      if (data.session?.user?.id) loadHistory(data.session.user.id)
+    })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s)
+      if (s?.user?.id) loadHistory(s.user.id)
+    })
     return () => listener.subscription.unsubscribe()
   }, [])
 
@@ -76,7 +84,15 @@ export default function HomeScreen() {
           <Text className="text-orange-300 text-xl">›</Text>
         </TouchableOpacity>
 
-        <Text className="text-orange-200 text-xs text-center mt-2">
+        <TouchableOpacity
+          onPress={() => router.push('/history')}
+          className="flex-row items-center justify-center gap-2 py-3"
+          activeOpacity={0.7}
+        >
+          <Text className="text-orange-200 text-sm">📋 Kasaysayan ng Bill</Text>
+        </TouchableOpacity>
+
+        <Text className="text-orange-200 text-xs text-center">
           Hindi kailangan ng account • Libre • Para sa lahat
         </Text>
       </View>
