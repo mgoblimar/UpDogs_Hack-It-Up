@@ -3,6 +3,7 @@ import { View, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platfo
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { enableDemoMode } from '@/lib/demoMode'
 import { Text, TextInput } from '@/components/CustomText'
 import IconLogo from '@/assets/KuryenteKo/icon-logo.svg'
 import { OutlineButton } from '@/components/Buttons'
@@ -44,7 +45,7 @@ export default function SignInScreen() {
       return
     }
 
-    router.replace('/home')
+    router.replace('/(tabs)/home')
   }
 
   async function handleSignUp() {
@@ -77,14 +78,16 @@ export default function SignInScreen() {
       return
     }
 
-    router.replace('/home')
+    router.replace('/(tabs)/home')
   }
 
-  async function handleSkip() {
+  function handleSkip() {
+    enableDemoMode()
+    router.replace('/(tabs)/home')
+    // Fire anon sign-in in background so Supabase gets a real session eventually
     if (isSupabaseConfigured) {
-      await supabase.auth.signInAnonymously()
+      supabase.auth.signInAnonymously().catch(() => null)
     }
-    router.replace('/home')
   }
 
   return (
@@ -170,13 +173,7 @@ export default function SignInScreen() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Test button to go back to onboarding */}
-              <View style={{ marginTop: 20 }}>
-                <OutlineButton 
-                  label="Go Back to Onboarding (Test)" 
-                  onPress={() => router.replace('/onboarding')} 
-                />
-              </View>
+
             </>
         </ScrollView>
       </KeyboardAvoidingView>

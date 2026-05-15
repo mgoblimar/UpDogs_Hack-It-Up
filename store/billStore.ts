@@ -12,7 +12,7 @@ interface BillStore {
 export const useBillStore = create<BillStore>((set) => ({
   billInput: null,
   verdict: null,
-  setBillInput: (input) => set({ billInput: input }),
+  setBillInput: (input) => set({ billInput: input, verdict: null }),
   setVerdict: (verdict) => set({ verdict }),
   reset: () => set({ billInput: null, verdict: null }),
 }))

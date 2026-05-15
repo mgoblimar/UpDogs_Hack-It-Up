@@ -102,6 +102,34 @@ export function analyzeBill(input: BillInput, rates: ERCRates = ERC_RATES): Verd
     })
   }
 
+  // When no individual charges were scanned/entered, estimate the breakdown
+  // using standard Meralco proportional distribution against the user's actual total.
+  if (lineItems.length === 0) {
+    const t = totalAmount
+    const estimated: Array<{ key: string; label: string; ratio: number; maxRate: number | null; expKey: string }> = [
+      { key: 'generationCharge',   label: 'Generation Charge',     ratio: rates.generationMax / rates.overallMax,   maxRate: rates.generationMax,   expKey: 'generationCharge' },
+      { key: 'transmissionCharge', label: 'Transmission Charge',   ratio: rates.transmissionMax / rates.overallMax, maxRate: rates.transmissionMax, expKey: 'transmissionCharge' },
+      { key: 'systemLossCharge',   label: 'System Loss Charge',    ratio: rates.systemLossMax / rates.overallMax,   maxRate: rates.systemLossMax,   expKey: 'systemLossCharge' },
+      { key: 'distributionCharge', label: 'Distribution Charge',   ratio: rates.distributionMax / rates.overallMax, maxRate: rates.distributionMax, expKey: 'distributionCharge' },
+      { key: 'universalCharges',   label: 'Universal Charges',     ratio: 0.014,                                    maxRate: null,                  expKey: 'universalCharges' },
+      { key: 'fitAll',             label: 'FiT-All (Renewable)',   ratio: 0.010,                                    maxRate: null,                  expKey: 'fitAll' },
+      { key: 'taxes',              label: 'Taxes (VAT)',            ratio: 0.12,                                     maxRate: null,                  expKey: 'taxes' },
+    ]
+    for (const { key, label, ratio, maxRate, expKey } of estimated) {
+      const amount = parseFloat((t * ratio).toFixed(2))
+      const rate = amount / kwh
+      lineItems.push({
+        key,
+        label,
+        amount,
+        ratePerKwh: rate,
+        status: maxRate !== null ? getStatus(rate, maxRate) : 'normal',
+        explanation: CHARGE_EXPLANATIONS[expKey] ?? '',
+        isEstimated: true,
+      })
+    }
+  }
+
   const ercMaxTotal = rates.overallMax * kwh
   const overchargeAmount = Math.max(0, totalAmount - ercMaxTotal)
 

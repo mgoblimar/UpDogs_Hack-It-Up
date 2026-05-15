@@ -1,17 +1,19 @@
 import type { ERCRates } from '@/types/rates'
 
-// ERC-cleared Meralco rates (April 2026)
+// ERC-cleared Meralco rates (May 2026)
 // Source: meralco.com.ph official rate schedule + ERC clearance
-// Overall residential rate April 2026: ₱14.3496/kWh
+// Overall residential rate May 2026: ₱14.3345/kWh (down ₱0.0151 from April)
+// Generation charge up to ₱8.7942 but offset by ERC PSA line rental caps (-₱0.1793)
+// and suspension of GEA-All collection + lower transmission charges
 export const ERC_RATES: ERCRates = {
-  generationMax: 8.3864,
-  transmissionMax: 0.95,
-  systemLossMax: 0.78,   // ERC cap is 8.5% of system load; Meralco actual was 4.97%
-  distributionMax: 2.76, // Frozen by ERC since August 2022
+  generationMax: 8.7942,
+  transmissionMax: 0.9007, // down ₱0.0493 from April
+  systemLossMax: 0.78,     // ERC cap is 8.5% of system load
+  distributionMax: 2.76,   // Frozen by ERC since August 2022
   supplyMax: 0.45,
   meteringMax: 0.25,
-  overallMax: 14.3496,   // Official ERC-cleared April 2026 residential rate
-  updatedAt: '2026-04',
+  overallMax: 14.3345,     // Official ERC-cleared May 2026 residential rate
+  updatedAt: '2026-05',
 }
 
 export const METRO_MANILA_CITIES = [

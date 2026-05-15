@@ -7,6 +7,7 @@ export interface LineItem {
   ratePerKwh?: number
   status: VerdictStatus
   explanation: string
+  isEstimated?: boolean
 }
 
 export interface BillInput {

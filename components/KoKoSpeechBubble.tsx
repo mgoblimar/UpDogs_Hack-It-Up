@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { View, Image } from 'react-native'
 import { Text } from '@/components/CustomText'
 
 interface KoKoSpeechBubbleProps {
@@ -19,7 +19,11 @@ export default function KoKoSpeechBubble({
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
-      <Text style={{ fontSize: owlSize }}>🦉</Text>
+      <Image
+        source={require('@/assets/KuryenteKo/figures/OwlWaving.png')}
+        style={{ width: owlSize, height: owlSize }}
+        resizeMode="contain"
+      />
       <View style={{
         flex: 1,
         backgroundColor: '#F5C518',

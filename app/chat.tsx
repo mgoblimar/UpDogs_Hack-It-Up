@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import electricityContext from '@/data/electricity-context.json'
+import { fetchEnergyNews, buildNewsContext } from '@/services/newsService'
+import type { NewsResult } from '@/services/newsService'
 import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking, Image } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useFocusEffect } from 'expo-router'
+import { Image as ExpoImage } from 'expo-image'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useBillStore } from '@/store/billStore'
 import AppHeader from '@/components/AppHeader'
 import { Text, TextInput } from '@/components/CustomText'
+
+type ChatMode = 'general' | 'bill'
 
 interface Message {
   id: string
@@ -28,7 +33,7 @@ function buildKeyIssues(): string {
   ).join('\n\n')
 }
 
-function buildSystemPrompt(billContext: string): string {
+function buildSystemPrompt(billContext: string, newsContext: string): string {
   return `Ikaw ay si KuryenteKo AI — isang matulungin na assistant para sa mga Pilipino tungkol sa kanilang kuryente at electricity bill.
 
 Mag-sagot sa Taglish (halo ng Tagalog at English). Gumamit ng simple at madaling maintindihan na salita. Maging maikli at direkta sa punto, pero kumpleto ang impormasyon.
@@ -56,6 +61,8 @@ ${buildRateHistory()}
 
 KASALUKUYANG MGA ISYU NA NAKAKAAPEKTO SA BILL:
 ${buildKeyIssues()}
+
+${newsContext ? `${newsContext}\n` : ''}
 
 CONSUMER RIGHTS:
 ${electricityContext.consumerRights.map((r) => `- ${r}`).join('\n')}
@@ -137,13 +144,35 @@ function pickRandomPrompts(count: number) {
 }
 
 export default function ChatScreen() {
+  const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const { q } = useLocalSearchParams<{ q?: string }>()
   const billInput = useBillStore((s) => s.billInput)
   const verdict = useBillStore((s) => s.verdict)
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [chatMode, setChatMode] = useState<ChatMode>('general')
   const scrollRef = useRef<ScrollView>(null)
   const [shownPrompts, setShownPrompts] = useState(() => pickRandomPrompts(3))
+  const autoSentRef = useRef(false)
+  const [liveNews, setLiveNews] = useState<NewsResult | null>(null)
+
+  // Fetch Tavily live news once on mount — injected into system prompt for current AI context
+  useEffect(() => {
+    fetchEnergyNews().then(setLiveNews).catch(() => null)
+  }, [])
+
+  // Auto-send preset question from ChargeRow deep link (e.g. /chat?q=Bakit...)
+  useEffect(() => {
+    if (q && !autoSentRef.current) {
+      autoSentRef.current = true
+      // Small delay so the screen is fully mounted before sending
+      const timer = setTimeout(() => sendText(q), 300)
+      return () => clearTimeout(timer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useFocusEffect(
     useCallback(() => {
@@ -153,6 +182,7 @@ export default function ChatScreen() {
 
   const hasBillContext = !!(billInput && verdict)
   const showQuickPrompts = messages.length === 1 && !loading
+  const useBillInChat = chatMode === 'bill' && hasBillContext
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true })
@@ -168,11 +198,14 @@ export default function ChatScreen() {
     setLoading(true)
 
     try {
-      const billContext = buildBillContext(
-        billInput as Parameters<typeof buildBillContext>[0],
-        verdict as Parameters<typeof buildBillContext>[1]
-      )
-      const systemPrompt = buildSystemPrompt(billContext)
+      const billContext = useBillInChat
+        ? buildBillContext(
+            billInput as Parameters<typeof buildBillContext>[0],
+            verdict as Parameters<typeof buildBillContext>[1]
+          )
+        : ''
+      const newsContext = buildNewsContext(liveNews)
+      const systemPrompt = buildSystemPrompt(billContext, newsContext)
 
       const apiMessages = [
         { role: 'system', content: systemPrompt },
@@ -188,6 +221,7 @@ export default function ChatScreen() {
         body: JSON.stringify({
           model: 'llama3.1-8b',
           max_tokens: 600,
+          temperature: 0.5,
           messages: apiMessages,
         }),
       })
@@ -225,24 +259,71 @@ export default function ChatScreen() {
     <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
       <AppHeader showBell showMenu />
 
+      {/* Mode toggle */}
+      <View style={{ backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingHorizontal: 16, paddingVertical: 10 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 50, padding: 3 }}>
+          <TouchableOpacity
+            onPress={() => setChatMode('general')}
+            activeOpacity={0.8}
+            style={{
+              flex: 1, paddingVertical: 8, borderRadius: 50, alignItems: 'center',
+              backgroundColor: chatMode === 'general' ? '#1C2B3A' : 'transparent',
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: chatMode === 'general' ? '#F5C518' : '#94A3B8' }}>
+              💬  General Chat
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setChatMode('bill')}
+            activeOpacity={0.8}
+            style={{
+              flex: 1, paddingVertical: 8, borderRadius: 50, alignItems: 'center',
+              backgroundColor: chatMode === 'bill' ? '#1C2B3A' : 'transparent',
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: chatMode === 'bill' ? '#F5C518' : '#94A3B8' }}>
+              🧾  Sariling Bill
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Bill context pill — shown when bill mode is active */}
+        {chatMode === 'bill' && (
+          hasBillContext ? (
+            <View style={{ marginTop: 8, backgroundColor: '#FFFBEA', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#FDE68A', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600', flex: 1 }}>
+                ₱{billInput!.totalAmount?.toFixed(2)} · {billInput!.kwh} kWh · {billInput!.city}
+              </Text>
+              <View style={{ backgroundColor: verdict!.status === 'overcharged' ? '#FEE2E2' : verdict!.status === 'high' ? '#FEF9C3' : '#DCFCE7', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: verdict!.status === 'overcharged' ? '#DC2626' : verdict!.status === 'high' ? '#D97706' : '#16A34A' }}>
+                  {verdict!.status === 'overcharged' ? 'OVERCHARGED' : verdict!.status === 'high' ? 'MATAAS' : 'NORMAL'}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={{ marginTop: 8, backgroundColor: '#F8FAFC', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ color: '#94A3B8', fontSize: 12, flex: 1 }}>Wala pang na-scan na bill.</Text>
+              <TouchableOpacity
+                onPress={() => router.push('/scanner')}
+                style={{ backgroundColor: '#F5C518', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}
+              >
+                <Text style={{ color: '#1C2B3A', fontSize: 11, fontWeight: '700' }}>I-scan</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        )}
+      </View>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Bill context banner */}
-        {hasBillContext && (
-          <View style={{ backgroundColor: '#FFFBEA', borderBottomWidth: 1, borderBottomColor: '#FDE68A', paddingHorizontal: 16, paddingVertical: 8 }}>
-            <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '600' }}>
-              🧾 May na-load na bill mula sa {billInput?.city} — pwede kang magtanong tungkol dito
-            </Text>
-          </View>
-        )}
-
         {/* Messages */}
         <ScrollView
           ref={scrollRef}
-          style={{ flex: 1, paddingHorizontal: 16, backgroundColor: '#EEF2F7' }}
+          style={{ flex: 1, paddingHorizontal: 16, backgroundColor: '#F5F0E8' }}
           contentContainerStyle={{ paddingVertical: 16, gap: 12 }}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
@@ -252,12 +333,14 @@ export default function ChatScreen() {
           ))}
 
           {loading && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#fff', borderRadius: 20, borderBottomLeftRadius: 4, alignSelf: 'flex-start', maxWidth: 200, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
-              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#8BA7C7', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 16 }}>🦉</Text>
+            <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FEF3C7', borderWidth: 2, borderColor: '#F5C518', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <ExpoImage source={require('@/assets/KuryenteKo/figures/Owl-sitting.png')} style={{ width: 38, height: 38 }} contentFit="contain" />
               </View>
-              <ActivityIndicator size="small" color="#F5C518" />
-              <Text style={{ color: '#9CA3AF', fontSize: 13 }}>Iniisip...</Text>
+              <View style={{ backgroundColor: '#FFFBEB', borderRadius: 22, borderBottomLeftRadius: 6, borderWidth: 1.5, borderColor: '#FDE68A', paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator size="small" color="#F5C518" />
+                <Text style={{ color: '#D97706', fontSize: 13, fontWeight: '600' }}>Iniisip ni KoKo...</Text>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -283,19 +366,28 @@ export default function ChatScreen() {
           </View>
         )}
 
-        {/* Input bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
+        {/* Input bar — padded for home indicator */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 + insets.bottom, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
           <TextInput
             style={{ flex: 1, backgroundColor: '#F3F4F6', borderRadius: 50, paddingHorizontal: 18, paddingVertical: 12, fontSize: 14, color: '#1C2B3A', maxHeight: 100 }}
-            placeholder="Enter message"
+            placeholder="Magtanong kay KoKo..."
             placeholderTextColor="#9CA3AF"
             value={input}
             onChangeText={setInput}
             multiline
             maxLength={500}
             returnKeyType="send"
-            onSubmitEditing={() => sendText(input.trim())}
             blurOnSubmit={false}
+            onSubmitEditing={() => {
+              const trimmed = input.trim()
+              if (trimmed) sendText(trimmed)
+            }}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === 'Enter') {
+                const trimmed = input.trim()
+                if (trimmed) sendText(trimmed)
+              }
+            }}
           />
           <TouchableOpacity
             onPress={() => sendText(input.trim())}
@@ -376,14 +468,22 @@ function ChatBubble({ message }: { message: Message }) {
 
   if (isUser) {
     return (
-      <View style={{ maxWidth: 280, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-        <View style={{ backgroundColor: '#fff', borderRadius: 20, borderBottomRightRadius: 4, paddingHorizontal: 16, paddingVertical: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
-          <MarkdownBody text={message.content} isUser={false} />
+      <View style={{ alignSelf: 'flex-end', maxWidth: '80%', alignItems: 'flex-end', gap: 4 }}>
+        <View style={{
+          backgroundColor: '#1C2B3A',
+          borderRadius: 22,
+          borderBottomRightRadius: 6,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          shadowColor: '#1C2B3A',
+          shadowOpacity: 0.18,
+          shadowOffset: { width: 0, height: 3 },
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <MarkdownBody text={message.content} isUser={true} />
         </View>
-        {/* Yellow user avatar */}
-        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5C518', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Text style={{ fontSize: 18 }}>👤</Text>
-        </View>
+        <Text style={{ fontSize: 10, color: '#94A3B8', marginRight: 4 }}>Ikaw</Text>
       </View>
     )
   }
@@ -406,52 +506,83 @@ function ChatBubble({ message }: { message: Message }) {
     .filter((l) => l.length > 0)
 
   return (
-    <View style={{ maxWidth: 280, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-      {/* KoKo owl avatar */}
-      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8BA7C7', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Text style={{ fontSize: 18 }}>🦉</Text>
+    <View style={{ alignSelf: 'flex-start', maxWidth: '82%', flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+      {/* KoKo animated avatar */}
+      <View style={{
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: '#FEF3C7',
+        borderWidth: 2, borderColor: '#F5C518',
+        alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, overflow: 'hidden',
+        shadowColor: '#F5C518', shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 4,
+      }}>
+        <ExpoImage
+          source={require('@/assets/KuryenteKo/figures/Owl-sitting.png')}
+          style={{ width: 38, height: 38 }}
+          contentFit="contain"
+        />
       </View>
-      <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, borderBottomLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 }}>
-        <MarkdownBody text={mainText} isUser={false} />
 
-        {hasSourcesSection && sourceLines.length > 0 && (
-          <View className="mt-3 pt-3 border-t border-stone-100">
-            <Text className="text-xs font-bold text-stone-500 mb-2">📚 Sources</Text>
-            {sourceLines.map((line, i) => {
-              const parsed = parseSourceLine(line)
-              if (parsed) {
+      <View style={{ flex: 1, gap: 4 }}>
+        {/* KoKo name label */}
+        <Text style={{ fontSize: 11, fontWeight: '700', color: '#F5C518', marginLeft: 4 }}>KoKo ✨</Text>
+
+        <View style={{
+          backgroundColor: '#FFFBEB',
+          borderRadius: 22,
+          borderBottomLeftRadius: 6,
+          borderWidth: 1.5,
+          borderColor: '#FDE68A',
+          paddingHorizontal: 16,
+          paddingVertical: 13,
+          shadowColor: '#000',
+          shadowOpacity: 0.06,
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 8,
+          elevation: 3,
+        }}>
+          <MarkdownBody text={mainText} isUser={false} />
+
+          {hasSourcesSection && sourceLines.length > 0 && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#FDE68A' }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#D97706', marginBottom: 8 }}>📚 Sources</Text>
+              {sourceLines.map((line, i) => {
+                const parsed = parseSourceLine(line)
+                if (parsed) {
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => Linking.openURL(parsed.url)}
+                      activeOpacity={0.75}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF9E6', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 6, borderWidth: 1, borderColor: '#FDE68A' }}
+                    >
+                      <Image
+                        source={{ uri: parsed.faviconUrl }}
+                        style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#F3F4F6' }}
+                        resizeMode="contain"
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#1C2B3A', fontSize: 11, fontWeight: '600', lineHeight: 16 }} numberOfLines={2}>
+                          {parsed.label}
+                        </Text>
+                        <Text style={{ color: '#94A3B8', fontSize: 10, marginTop: 1 }} numberOfLines={1}>
+                          {parsed.domain}
+                        </Text>
+                      </View>
+                      <Text style={{ color: '#D97706', fontSize: 16 }}>›</Text>
+                    </TouchableOpacity>
+                  )
+                }
                 return (
-                  <TouchableOpacity
-                    key={i}
-                    onPress={() => Linking.openURL(parsed.url)}
-                    activeOpacity={0.75}
-                    className="flex-row items-center gap-3 bg-stone-50 rounded-xl px-3 py-2 mb-2 border border-stone-100"
-                  >
-                    <Image
-                      source={{ uri: parsed.faviconUrl }}
-                      className="w-8 h-8 rounded-lg bg-stone-200"
-                      resizeMode="contain"
-                    />
-                    <View className="flex-1">
-                      <Text className="text-stone-800 text-xs font-semibold leading-4" numberOfLines={2}>
-                        {parsed.label}
-                      </Text>
-                      <Text className="text-stone-400 text-xs leading-3 mt-0.5" numberOfLines={1}>
-                        {parsed.domain}
-                      </Text>
-                    </View>
-                    <Text className="text-stone-300 text-base">›</Text>
-                  </TouchableOpacity>
+                  <Text key={i} style={{ color: '#94A3B8', fontSize: 11, lineHeight: 16, marginBottom: 2 }}>
+                    {line}
+                  </Text>
                 )
-              }
-              return (
-                <Text key={i} className="text-stone-400 text-xs leading-4 mb-1">
-                  {line}
-                </Text>
-              )
-            })}
-          </View>
-        )}
+              })}
+            </View>
+          )}
+        </View>
       </View>
     </View>
   )

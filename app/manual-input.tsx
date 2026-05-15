@@ -1,9 +1,9 @@
-import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native'
+import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useBillStore } from '@/store/billStore'
-import { METRO_MANILA_CITIES } from '@/lib/constants'
 import type { BillInput } from '@/types/bill'
 import AppHeader from '@/components/AppHeader'
 import KoKoSpeechBubble from '@/components/KoKoSpeechBubble'
@@ -23,8 +23,8 @@ interface ManualFormData {
 
 export default function ManualInputScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const setBillInput = useBillStore((s) => s.setBillInput)
-  const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ManualFormData>({
@@ -34,8 +34,6 @@ export default function ManualInputScreen() {
       systemLossCharge: '', distributionCharge: '', taxes: '',
     },
   })
-
-  const selectedCity = watch('city')
 
   function onSubmit(data: ManualFormData) {
     const totalAmount = parseFloat(data.totalAmount)
@@ -73,7 +71,7 @@ export default function ManualInputScreen() {
       >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: insets.bottom + 32 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Subtitle */}
@@ -123,32 +121,21 @@ export default function ManualInputScreen() {
           </Text>
 
           {/* City */}
-          <FieldLabel label="Lungsod" required />
-          <TouchableOpacity
-            style={[fieldStyle, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
-            onPress={() => setCityPickerOpen(!cityPickerOpen)}
-            activeOpacity={0.8}
-          >
-            <Text style={{ color: selectedCity ? '#1C2B3A' : '#D1D5DB', fontSize: 16 }}>
-              {selectedCity || 'Piliin ang lungsod...'}
-            </Text>
-            <Text style={{ color: '#9CA3AF' }}>{cityPickerOpen ? '▲' : '▼'}</Text>
-          </TouchableOpacity>
-          {cityPickerOpen && (
-            <View style={{ backgroundColor: '#fff', borderRadius: 14, marginBottom: 16, overflow: 'hidden', maxHeight: 160, borderWidth: 2, borderColor: '#E5E7EB' }}>
-              <ScrollView nestedScrollEnabled>
-                {METRO_MANILA_CITIES.map((city) => (
-                  <TouchableOpacity
-                    key={city}
-                    style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', backgroundColor: selectedCity === city ? '#FFFBEA' : '#fff' }}
-                    onPress={() => { setValue('city', city); setCityPickerOpen(false) }}
-                  >
-                    <Text style={{ color: selectedCity === city ? '#D4A800' : '#374151', fontWeight: selectedCity === city ? '700' : '400', fontSize: 15 }}>{city}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          <FieldLabel label="Lungsod / Bayan" required />
+          <Controller
+            control={control}
+            name="city"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={fieldStyle}
+                placeholder="hal. Caloocan, Cebu City, Davao..."
+                placeholderTextColor="#D1D5DB"
+                value={value}
+                onChangeText={onChange}
+                autoCapitalize="words"
+              />
+            )}
+          />
 
           {/* Advanced charges — optional */}
           <TouchableOpacity
@@ -197,7 +184,11 @@ export default function ManualInputScreen() {
 
           {/* KoKo speech bubble */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 }}>
-            <Text style={{ fontSize: 44 }}>🦉</Text>
+            <Image
+              source={require('@/assets/KuryenteKo/figures/OwlWaving.png')}
+              style={{ width: 56, height: 56 }}
+              resizeMode="contain"
+            />
             <View style={{ flex: 1, backgroundColor: '#F5C518', borderRadius: 12, borderBottomLeftRadius: 4, padding: 10, marginLeft: 10 }}>
               <Text style={{ color: '#1C2B3A', fontSize: 12, fontWeight: '600' }}>
                 Siguraduhing tama ang mga numero para sa mas accurate na analysis!

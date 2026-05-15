@@ -38,15 +38,12 @@ export default function OnboardingScreen() {
               </View>
             </View>
 
-            <View style={{ marginTop: 20, width: '100%', gap: 12 }}>
+            <View style={{ marginTop: 20, marginBottom: 80, width: '100%', gap: 12 }}>
               <PrimaryButton 
                 label="Susunod →" 
                 onPress={() => setStep(1)} 
               />
-              <OutlineButton 
-                label="Go Back to Splash Screen (Test)" 
-                onPress={() => router.replace('/')} 
-              />
+
             </View>
           </>
         )}
@@ -70,7 +67,7 @@ export default function OnboardingScreen() {
               </View>
             </View>
 
-            <View style={{ marginTop: 20, width: '100%', gap: 12 }}>
+            <View style={{ marginTop: 20, marginBottom: 80, width: '100%', gap: 12 }}>
               <PrimaryButton 
                 label="Susunod →" 
                 onPress={() => setStep(2)} 
@@ -102,7 +99,7 @@ export default function OnboardingScreen() {
               </Text>
             </View>
             
-            <View style={{ marginTop: 40, width: '100%', gap: 12 }}>
+            <View style={{ marginTop: 40, marginBottom: 80, width: '100%', gap: 12 }}>
               <PrimaryButton 
                 label="Magsimula →" 
                 onPress={() => router.replace('/sign-in')} 

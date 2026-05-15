@@ -34,6 +34,7 @@
         "backgroundColor": "#F97316"
       },
       "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
       "predictiveBackGestureEnabled": false,
       "package": "com.kuryenteko.app",
       "permissions": [

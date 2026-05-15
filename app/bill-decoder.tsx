@@ -1,32 +1,37 @@
 import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useBillStore } from '@/store/billStore'
 import { analyzeBill } from '@/services/billAnalysis'
-import type { LineItem } from '@/types/bill'
 import AppHeader from '@/components/AppHeader'
 import ChargeRow from '@/components/ChargeRow'
 import { Text } from '@/components/CustomText'
-
-
 
 export default function BillDecoderScreen() {
   const router = useRouter()
   const billInput = useBillStore((s) => s.billInput)
   const setVerdict = useBillStore((s) => s.setVerdict)
-  const verdict = useBillStore((s) => s.verdict)
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!billInput?.totalAmount || !billInput?.kwh) return
-    const result = analyzeBill({
-      totalAmount: billInput.totalAmount,
-      kwh: billInput.kwh,
-      city: billInput.city ?? '',
-      ...billInput,
-    })
-    setVerdict(result)
+  // Compute synchronously — no useEffect gap, no stale verdict flash
+  const verdict = useMemo(() => {
+    if (!billInput?.totalAmount || !billInput?.kwh) return null
+    try {
+      return analyzeBill({
+        totalAmount: billInput.totalAmount,
+        kwh: billInput.kwh,
+        city: billInput.city ?? '',
+        ...billInput,
+      })
+    } catch {
+      return null
+    }
   }, [billInput])
+
+  // Write to store so verdict.tsx can read it
+  useEffect(() => {
+    if (verdict) setVerdict(verdict)
+  }, [verdict])
 
   if (!billInput || !verdict) {
     return (
@@ -68,23 +73,50 @@ export default function BillDecoderScreen() {
           Bill Decoder
         </Text>
 
-        {/* Na-scan na Halaga card */}
-        <View style={{ marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 20, padding: 24, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
-          <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 6 }}>Na-scan na Halaga</Text>
-          <Text style={{ color: '#1C2B3A', fontSize: 44, fontWeight: '900', letterSpacing: -1 }}>
+        {/* Key highlights card */}
+        <View style={{ marginHorizontal: 20, backgroundColor: '#1C2B3A', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, elevation: 4 }}>
+          {/* Total bill — hero */}
+          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 2 }}>KABUUANG BILL</Text>
+          <Text style={{ color: '#fff', fontSize: 42, fontWeight: '900', letterSpacing: -1, marginBottom: 16 }}>
             ₱{billInput.totalAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
-          <View style={{ backgroundColor: '#F3F4F6', borderRadius: 50, paddingHorizontal: 16, paddingVertical: 8, marginTop: 10 }}>
-            <Text style={{ color: '#374151', fontSize: 14, fontWeight: '600' }}>
-              {billInput.kwh} kWh • {billInput.city || 'Metro Manila'}
-            </Text>
+
+          {/* Three stat chips in a row */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 12 }}>
+              <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', letterSpacing: 0.4, marginBottom: 4 }}>kWh USED</Text>
+              <Text style={{ color: '#F5C518', fontSize: 20, fontWeight: '800' }}>{billInput.kwh}</Text>
+              <Text style={{ color: '#64748B', fontSize: 10, marginTop: 1 }}>kilowatt-hour</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 12 }}>
+              <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', letterSpacing: 0.4, marginBottom: 4 }}>RATE/kWh</Text>
+              <Text style={{ color: '#F5C518', fontSize: 20, fontWeight: '800' }}>
+                ₱{verdict.userRatePerKwh.toFixed(2)}
+              </Text>
+              <Text style={{ color: '#64748B', fontSize: 10, marginTop: 1 }}>iyong rate</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 12 }}>
+              <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', letterSpacing: 0.4, marginBottom: 4 }}>LUNGSOD</Text>
+              <Text style={{ color: '#F5C518', fontSize: 13, fontWeight: '800', marginTop: 3 }} numberOfLines={2}>
+                {billInput.city || 'Hindi tinukoy'}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Saan napunta ang pera mo section */}
-        <Text style={{ color: '#1C2B3A', fontSize: 17, fontWeight: '800', paddingHorizontal: 20, marginTop: 24, marginBottom: 12 }}>
+        <Text style={{ color: '#1C2B3A', fontSize: 17, fontWeight: '800', paddingHorizontal: 20, marginTop: 24, marginBottom: 8 }}>
           Saan napunta ang pera mo?
         </Text>
+
+        {verdict.lineItems.some((i) => i.isEstimated) && (
+          <View style={{ marginHorizontal: 20, marginBottom: 10, backgroundColor: '#FFFBEA', borderRadius: 12, borderWidth: 1, borderColor: '#FDE68A', paddingHorizontal: 14, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontSize: 14 }}>💡</Text>
+            <Text style={{ color: '#92400E', fontSize: 12, fontWeight: '600', flex: 1, lineHeight: 18 }}>
+              Estimated breakdown — batay sa karaniwang proporsyon ng Meralco. I-scan ang detalyadong bill para sa tumpak na datos.
+            </Text>
+          </View>
+        )}
 
         <View style={{ marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
           {verdict.lineItems.map((item, index) => (

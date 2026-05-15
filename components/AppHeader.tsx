@@ -1,7 +1,8 @@
 import { View, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { Text } from '@/components/CustomText'
+import { FontAwesome6 } from '@expo/vector-icons'
+import TextLogo from '@/assets/KuryenteKo/text-logo.svg'
 
 interface AppHeaderProps {
   showBack?: boolean
@@ -11,7 +12,7 @@ interface AppHeaderProps {
 
 /**
  * Shared top navigation bar matching the KuryenteKo design.
- * Dark navy bar with the KURYENTEKO wordmark centered,
+ * White bar with the KURYENTEKO logo centered,
  * hamburger icon on the left, bell on the right.
  */
 export default function AppHeader({
@@ -22,58 +23,49 @@ export default function AppHeader({
   const router = useRouter()
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: '#1C2B3A' }}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: '#ffffff' }}>
       <View
         style={{
-          backgroundColor: '#1C2B3A',
+          backgroundColor: '#ffffff',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 20,
-          paddingVertical: 12,
+          paddingVertical: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: '#f8fafc',
+          zIndex: 10,
         }}
       >
         {/* Left — hamburger or back */}
-        {showBack ? (
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={{ color: '#fff', fontSize: 22 }}>←</Text>
-          </TouchableOpacity>
-        ) : showMenu ? (
-          <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <View style={{ gap: 4 }}>
-              <View style={{ width: 22, height: 2, backgroundColor: '#fff', borderRadius: 1 }} />
-              <View style={{ width: 22, height: 2, backgroundColor: '#fff', borderRadius: 1 }} />
-              <View style={{ width: 22, height: 2, backgroundColor: '#fff', borderRadius: 1 }} />
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 22 }} />
-        )}
+        <View style={{ flex: 1, alignItems: 'flex-start' }}>
+          {showBack ? (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <FontAwesome6 name="arrow-left" size={20} color="#475569" />
+            </TouchableOpacity>
+          ) : showMenu ? (
+            <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <FontAwesome6 name="bars" size={20} color="#475569" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         {/* Center — Logo wordmark */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 0 }}>
-          <Text style={{ color: '#F5C518', fontSize: 18, fontWeight: '900', letterSpacing: 1 }}>
-            KUR
-          </Text>
-          <Text style={{ color: '#1C2B3A', fontSize: 18, fontWeight: '900', backgroundColor: '#F5C518', paddingHorizontal: 2, borderRadius: 2 }}>
-            ⚡
-          </Text>
-          <Text style={{ color: '#F5C518', fontSize: 18, fontWeight: '900', letterSpacing: 1 }}>
-            ENTEKO
-          </Text>
+        <View style={{ flex: 2, alignItems: 'center' }}>
+          <TextLogo height={44} width={220} />
         </View>
 
         {/* Right — bell */}
-        {showBell ? (
-          <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={{ fontSize: 20 }}>🔔</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 22 }} />
-        )}
+        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+          {showBell ? (
+            <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <FontAwesome6 name="bell" size={20} color="#64748b" solid={false} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
     </SafeAreaView>
   )

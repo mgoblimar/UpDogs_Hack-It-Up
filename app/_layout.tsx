@@ -2,16 +2,17 @@ import '../global.css'
 import { useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as WebBrowser from 'expo-web-browser'
 import * as SplashScreen from 'expo-splash-screen'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { 
-  useFonts, 
-  Quicksand_300Light, 
-  Quicksand_400Regular, 
-  Quicksand_500Medium, 
-  Quicksand_600SemiBold, 
-  Quicksand_700Bold 
+import {
+  useFonts,
+  Quicksand_300Light,
+  Quicksand_400Regular,
+  Quicksand_500Medium,
+  Quicksand_600SemiBold,
+  Quicksand_700Bold
 } from '@expo-google-fonts/quicksand'
 
 // Keep the splash screen visible while we fetch resources
@@ -50,7 +51,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" backgroundColor="#1C2B3A" />
       <Stack
         screenOptions={{
@@ -59,7 +60,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="manual-input" options={{ headerShown: false }} />
@@ -70,9 +71,7 @@ export default function RootLayout() {
         <Stack.Screen name="lifeline-checker" options={{ headerShown: false }} />
         <Stack.Screen name="dti-report" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="heat-map" options={{ headerShown: false }} />
-        <Stack.Screen name="history" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   )
 }

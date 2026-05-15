@@ -1,10 +1,7 @@
 import { View, ScrollView, TouchableOpacity, Linking } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { useBillStore } from '@/store/billStore'
 import { useState } from 'react'
 import AppHeader from '@/components/AppHeader'
-import AIGeneratedBanner from '@/components/AIGeneratedBanner'
-import { YellowButton } from '@/components/Buttons'
 import { Text, TextInput } from '@/components/CustomText'
 
 function InfoRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
@@ -16,10 +13,64 @@ function InfoRow({ label, value, valueColor }: { label: string; value: string; v
   )
 }
 
+function buildTemplate(
+  billInput: ReturnType<typeof useBillStore.getState>['billInput'],
+  verdict: ReturnType<typeof useBillStore.getState>['verdict'],
+): string {
+  const city = billInput?.city || '[Lungsod/Bayan]'
+  const total = billInput?.totalAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00'
+  const kwh = billInput?.kwh ?? 0
+  const userRate = verdict?.userRatePerKwh.toFixed(4) ?? '0.0000'
+  const ercMax = verdict?.ercMaxRatePerKwh.toFixed(4) ?? '14.3496'
+  const diff = verdict ? (verdict.userRatePerKwh - verdict.ercMaxRatePerKwh).toFixed(4) : '0.0000'
+  const overcharge = verdict?.overchargeAmount.toFixed(2) ?? '0.00'
+  const month = new Date().toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' })
+  const today = new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+
+  return `Petsa: ${today}
+
+Patungkol: Opisina ng Consumer Affairs
+Energy Regulatory Commission (ERC)
+consumer_affairs@erc.ph
+
+PAKSA: Formal na Reklamo — Sobrang Singil sa Kuryente (Rate Overcharge)
+
+Magandang araw po,
+
+Ako po ay isang residential consumer ng Meralco sa ${city}. Nais ko pong mag-file ng formal na reklamo tungkol sa aking electric bill para sa buwan ng ${month}.
+
+DETALYE NG BILL:
+- Kabuuang singil (Charges for Billing Period): ₱${total}
+- Kiloawatt-hour na natupok: ${kwh} kWh
+- Epektibong rate na siningil: ₱${userRate}/kWh
+- ERC-cleared maximum rate: ₱${ercMax}/kWh
+- Pagkakaiba: ₱${diff}/kWh
+- Tinatayang sobrang singil: ₱${overcharge}
+
+LEGAL NA BATAYAN:
+Ayon sa ERC Resolution No. 10, Series of 2001 (Magna Carta for Residential Electricity Consumers), Rule 16, Section 4, ang distribution utility ay hindi maaaring maningil ng higit sa ERC-cleared rate para sa residential consumers. Ang kasalukuyang approved na overall rate para sa aking lugar ay ₱${ercMax}/kWh lamang.
+
+HINIHILING KO:
+1. Pormal na paliwanag kung bakit ang aking epektibong rate (₱${userRate}/kWh) ay lumagpas sa ERC-cleared maximum (₱${ercMax}/kWh)
+2. Refund o bill credit ng tinatayang sobrang siningil na ₱${overcharge}
+3. Pagsunod sa ERC-approved rates para sa lahat ng susunod na billing period
+
+Nakalakip ang kopya ng aking electric bill para sa inyong reference at pagsusuri.
+
+Umaasa po akong mabibigyan ito ng agarang aksyon alinsunod sa Magna Carta for Residential Electricity Consumers.
+
+Maraming salamat po.
+
+Taos-pusong,
+[Iyong Pangalan]
+${city}
+[Contact Number]`
+}
+
 export default function ERCComplaintScreen() {
   const billInput = useBillStore((s) => s.billInput)
   const verdict = useBillStore((s) => s.verdict)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(() => buildTemplate(billInput, verdict))
 
   const hasOvercharge = verdict?.status === 'overcharged'
 
@@ -29,16 +80,11 @@ export default function ERCComplaintScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Date + title row */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <TouchableOpacity style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18 }}>←</Text>
-          </TouchableOpacity>
-          <View>
-            <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
-              {new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
-            </Text>
-            <Text style={{ color: '#1C2B3A', fontSize: 18, fontWeight: '800' }}>ERC Complaint</Text>
-          </View>
+        <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+          <Text style={{ color: '#9CA3AF', fontSize: 11, fontWeight: '600', letterSpacing: 0.5 }}>
+            {new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
+          </Text>
+          <Text style={{ color: '#1C2B3A', fontSize: 18, fontWeight: '800', marginTop: 2 }}>ERC Complaint</Text>
         </View>
 
         {/* AI Generated banner */}
@@ -85,24 +131,23 @@ export default function ERCComplaintScreen() {
 
         {/* Mensahe ng Reklamo */}
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-          <Text style={{ color: '#1C2B3A', fontSize: 15, fontWeight: '700', marginBottom: 10 }}>
-            Mensahe ng Reklamo
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <Text style={{ color: '#1C2B3A', fontSize: 15, fontWeight: '700' }}>Mensahe ng Reklamo</Text>
+            <Text style={{ color: '#9CA3AF', fontSize: 12 }}>I-edit kung kinakailangan</Text>
+          </View>
           <TextInput
             style={{
               backgroundColor: '#fff',
               borderRadius: 16,
               padding: 16,
-              fontSize: 14,
+              fontSize: 13,
               color: '#1C2B3A',
-              minHeight: 120,
+              minHeight: 320,
               textAlignVertical: 'top',
               borderWidth: 1,
               borderColor: '#E5E7EB',
-              lineHeight: 21,
+              lineHeight: 20,
             }}
-            placeholder="Ilagay ang iyong mensahe ng reklamo dito..."
-            placeholderTextColor="#D1D5DB"
             multiline
             value={message}
             onChangeText={setMessage}
@@ -171,15 +216,30 @@ export default function ERCComplaintScreen() {
           ))}
         </View>
 
-        {/* Submit button */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        {/* Submit buttons */}
+        <View style={{ paddingHorizontal: 20, marginTop: 24, gap: 12 }}>
+          {/* Primary — email ERC with pre-filled message */}
           <TouchableOpacity
-            onPress={() => Linking.openURL('https://www.erc.gov.ph')}
-            style={{ backgroundColor: '#F5C518', borderRadius: 50, paddingVertical: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            onPress={() => {
+              const subject = encodeURIComponent('Formal Consumer Complaint — Rate Overcharge')
+              const body = encodeURIComponent(message)
+              Linking.openURL(`mailto:consumer_affairs@erc.ph?subject=${subject}&body=${body}`)
+            }}
+            style={{ backgroundColor: '#1C2B3A', borderRadius: 50, paddingVertical: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
             activeOpacity={0.85}
           >
-            <Text style={{ fontSize: 18 }}>✈️</Text>
-            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '800' }}>I-Submit sa ERC</Text>
+            <Text style={{ fontSize: 18 }}>📧</Text>
+            <Text style={{ color: '#F5C518', fontSize: 16, fontWeight: '800' }}>I-Email sa ERC</Text>
+          </TouchableOpacity>
+
+          {/* Secondary — open ERC website */}
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://www.erc.gov.ph')}
+            style={{ backgroundColor: '#fff', borderRadius: 50, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, borderWidth: 2, borderColor: '#E5E7EB' }}
+            activeOpacity={0.85}
+          >
+            <Text style={{ fontSize: 16 }}>🌐</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 15, fontWeight: '700' }}>Buksan ang ERC Portal</Text>
           </TouchableOpacity>
         </View>
 
