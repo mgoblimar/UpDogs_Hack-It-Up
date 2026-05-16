@@ -134,24 +134,27 @@ export default function HomeScreen() {
     ]).start()
   }, [session])
 
-  // ── Estimated Bill (Phase 8B) ──────────────────────────────────────────────
+  // ── Estimated Bill ─────────────────────────────────────────────────────────
+  // Formula: current month's rate × average kWh from past bills
+  // Falls back to averaging total amounts if rate is unavailable.
   const estimatedBill = useMemo(() => {
     if (bills.length === 0) return null
 
-    const now = new Date()
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const prevMonthStr = prevMonth.toISOString().slice(0, 7) // 'YYYY-MM'
+    const latest = bills[0]
+    const currentRate = latest.ratePerKwh
 
-    // 1. Find a bill scanned in the previous calendar month
-    const lastMonthBill = bills.find((b) => b.date.startsWith(prevMonthStr))
-    if (lastMonthBill) {
+    // Need at least 2 bills to compute a meaningful kWh average
+    if (currentRate && bills.length >= 2) {
+      const recentBills = bills.slice(0, Math.min(bills.length, 3))
+      const avgKwh = recentBills.reduce((s, b) => s + b.kwh, 0) / recentBills.length
+      const amount = currentRate * avgKwh
       return {
-        amount: lastMonthBill.totalAmount,
-        label: `Batay sa iyong bill noong ${formatMonthPH(prevMonthStr)}`,
+        amount,
+        label: `₱${currentRate.toFixed(4)}/kWh × avg ${Math.round(avgKwh)} kWh`,
       }
     }
 
-    // 2. Average of last 3 bills
+    // Fallback: average of last 3 total amounts
     if (bills.length >= 3) {
       const avg = bills.slice(0, 3).reduce((s, b) => s + b.totalAmount, 0) / 3
       return {
@@ -160,9 +163,9 @@ export default function HomeScreen() {
       }
     }
 
-    // 3. Most recent single bill
+    // Last resort: most recent bill as-is
     return {
-      amount: bills[0].totalAmount,
+      amount: latest.totalAmount,
       label: 'Batay sa iyong pinakabagong bill',
     }
   }, [bills])

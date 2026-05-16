@@ -159,12 +159,13 @@ function BillCard({
 
   function handleSwipeDelete() {
     swipeableRef.current?.close()
+    const month = new Date(record.date).toLocaleDateString('fil-PH', { month: 'long', year: 'numeric' })
     Alert.alert(
-      'Burahin ang bill na ito?',
-      `₱${record.totalAmount.toFixed(2)} · ${record.city || 'Walang lungsod'}`,
+      '🗑️ Burahin ang Bill?',
+      `${record.city || 'Walang lungsod'} · ${month}\n₱${record.totalAmount.toLocaleString()} · ${record.kwh} kWh\n\nHindi na ito mababawi.`,
       [
-        { text: 'Huwag', style: 'cancel' },
-        { text: 'Burahin', style: 'destructive', onPress: onDelete },
+        { text: 'Huwag na', style: 'cancel' },
+        { text: 'Oo, Burahin', style: 'destructive', onPress: onDelete },
       ]
     )
   }

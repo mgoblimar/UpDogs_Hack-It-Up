@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F97316"
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
       "expo-router",
@@ -22,7 +22,8 @@
           "cameraPermission": "KuryenteKo needs access to your camera to scan your electricity bill."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-audio"
     ],
     "ios": {
       "supportsTablet": false,
@@ -32,6 +33,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F97316"
+      },
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff",
+        "dark": {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#121212"
+        }
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "pan",

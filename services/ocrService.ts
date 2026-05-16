@@ -1,12 +1,18 @@
 import { openai } from '@/lib/openai'
 import type { BillInput } from '@/types/bill'
 
-const OCR_PROVIDER = process.env.EXPO_PUBLIC_OCR_PROVIDER ?? 'openrouter'
+const OCR_PROVIDER = 'groq'
 
 const OCR_PROMPT = `You are an OCR specialist for Philippine Meralco electricity bills.
-Extract ONLY the fields below from the bill image and return valid JSON.
+Extract ONLY the billing number fields listed below. Nothing else.
 
-IMPORTANT RULES:
+PRIVACY RULES — STRICTLY ENFORCED:
+- DO NOT extract, repeat, or include the customer name, account number, address, phone number, email, or any personal identifier
+- DO NOT store, log, or reference any personal information from the image
+- IGNORE everything on the bill except the numeric billing charges listed below
+- If you see personal data, skip it entirely — treat it as if it does not exist
+
+BILLING EXTRACTION RULES:
 - "totalAmount" = "Charges for this billing period" (NOT "Total Amount Due" which includes previous unpaid balance)
 - "ratePerKwh" = the "Your rate this month ₱X.XX per kWh" value shown on front page
 - "distributionCharge" = the Distribution (Meralco) subtotal (includes metering + supply sub-items)
@@ -132,13 +138,53 @@ async function extractWithOpenAI(base64Image: string): Promise<string> {
   return response.choices[0]?.message?.content ?? ''
 }
 
+async function extractWithGroq(base64Image: string): Promise<string> {
+  const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY
+  if (!apiKey) throw new Error('EXPO_PUBLIC_GROQ_API_KEY is not set.')
+
+  console.log('[OCR] Using Groq Vision, sending image...')
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      max_tokens: 600,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: OCR_PROMPT },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
+          ],
+        },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    const err = await response.text()
+    console.error('[OCR] Groq HTTP error:', response.status, err)
+    throw new Error(`Groq API error ${response.status}: ${err}`)
+  }
+
+  const json = await response.json()
+  const text = json.choices?.[0]?.message?.content ?? ''
+  console.log('[OCR] Groq raw response:', text)
+  return text
+}
+
 export async function extractBillFromImage(base64Image: string): Promise<Partial<BillInput>> {
   const content =
     OCR_PROVIDER === 'openai'
       ? await extractWithOpenAI(base64Image)
       : OCR_PROVIDER === 'gemini'
       ? await extractWithGemini(base64Image)
-      : await extractWithOpenRouter(base64Image)
+      : OCR_PROVIDER === 'openrouter'
+      ? await extractWithOpenRouter(base64Image)
+      : await extractWithGroq(base64Image)
 
   console.log('[OCR] Provider:', OCR_PROVIDER)
   console.log('[OCR] Full content:', content)

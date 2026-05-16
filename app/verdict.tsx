@@ -196,7 +196,7 @@ export default function VerdictScreen() {
 
   function handleScanNew() {
     reset()
-    router.replace('/home')
+    router.push('/scanner')
   }
 
   function toggleIssue(key: string) {
@@ -394,6 +394,14 @@ export default function VerdictScreen() {
         </View>
 
         {/* ── Live News (Tavily) ── */}
+        {!newsLoading && (!news || news.articles.length === 0) && (
+          <View style={{ marginHorizontal: 20, marginTop: 14, backgroundColor: '#F8FAFC', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', gap: 6 }}>
+            <Text style={{ fontSize: 20 }}>📰</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600' }}>Walang live news ngayon</Text>
+            <Text style={{ color: '#CBD5E1', fontSize: 11, textAlign: 'center' }}>Idagdag ang EXPO_PUBLIC_TAVILY_API_KEY sa .env para makita ang pinakabagong balita</Text>
+          </View>
+        )}
+
         {(newsLoading || (news && news.articles.length > 0)) && (
           <View style={{ marginHorizontal: 20, marginTop: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>

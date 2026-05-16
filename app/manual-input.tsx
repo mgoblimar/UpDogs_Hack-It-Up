@@ -91,6 +91,7 @@ export default function ManualInputScreen() {
                 placeholder="₱ 0.00"
                 placeholderTextColor="#D1D5DB"
                 keyboardType="decimal-pad"
+                inputMode="decimal"
                 value={value}
                 onChangeText={onChange}
               />
@@ -172,6 +173,7 @@ export default function ManualInputScreen() {
                         placeholder="0.00"
                         placeholderTextColor="#D1D5DB"
                         keyboardType="decimal-pad"
+                inputMode="decimal"
                         value={value}
                         onChangeText={onChange}
                       />

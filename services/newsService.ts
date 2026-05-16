@@ -3,7 +3,7 @@
 // API key: get from app.tavily.com → add EXPO_PUBLIC_TAVILY_API_KEY to .env
 
 const TAVILY_API_KEY = process.env.EXPO_PUBLIC_TAVILY_API_KEY ?? ''
-const QUERY = 'Meralco ERC electricity rate hike Philippines 2026'
+const QUERY = 'Meralco electricity bill kuryente ERC Philippines 2026'
 const NEWS_TTL_MS = 10 * 60 * 1000 // 10-minute in-memory cache per session
 
 export interface NewsArticle {

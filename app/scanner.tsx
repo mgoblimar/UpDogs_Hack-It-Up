@@ -1,8 +1,8 @@
 import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image, Modal, Animated, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useBillStore } from '@/store/billStore'
 import { extractBillFromImage } from '@/services/ocrService'
@@ -24,11 +24,22 @@ export default function ScannerScreen() {
   const [errorMsg, setErrorMsg] = useState('')
   const [showCamera, setShowCamera] = useState(false)
 
+  // Set to true only when navigating to bill-decoder via handleConfirm.
+  // Guards useFocusEffect from resetting state when the CameraModal closes —
+  // Modal close also fires a screen focus event on Android.
+  const cameFromBillDecoder = useRef(false)
+
   async function handleBase64Capture(base64: string) {
     setShowCamera(false)
     setScanState('scanning')
     try {
       const data = await extractBillFromImage(base64)
+      const hasValues = data.totalAmount || data.kwh
+      if (!hasValues) {
+        setErrorMsg('Walang nahanap na datos sa litrato. Siguraduhing malinaw ang bill at tama ang ilaw. Subukan ulit o mag-manual input.')
+        setScanState('error')
+        return
+      }
       setExtracted(data)
       setScanState('confirm')
     } catch (err: unknown) {
@@ -48,12 +59,26 @@ export default function ScannerScreen() {
     await handleBase64Capture(result.assets[0].base64)
   }
 
+  // Only resets when returning from bill-decoder — NOT when the CameraModal
+  // closes (which also fires a focus event on Android and would kill the scan).
+  useFocusEffect(
+    useCallback(() => {
+      if (cameFromBillDecoder.current) {
+        setScanState('idle')
+        setExtracted({})
+        setShowCamera(false)
+        cameFromBillDecoder.current = false
+      }
+    }, [])
+  )
+
   function handleConfirm() {
     if (!extracted.totalAmount || !extracted.kwh) {
       Alert.alert('Kulang ang datos', 'Ilagay ang Total Amount at kWh bago magpatuloy.')
       return
     }
     setBillInput(extracted)
+    cameFromBillDecoder.current = true
     router.push('/bill-decoder')
   }
 
@@ -79,22 +104,28 @@ export default function ScannerScreen() {
       <View style={{ flex: 1, backgroundColor: '#F8F8F8' }}>
         <AppHeader showBack />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 20 }}>
-          <Text style={{ fontSize: 56 }}>😔</Text>
+          <Text style={{ fontSize: 56 }}>📷</Text>
           <Text style={{ color: '#1C2B3A', fontSize: 22, fontWeight: '800', textAlign: 'center' }}>
-            Hindi Na-scan ang Bill
+            Hindi Nakilala ang Bill
           </Text>
-          <Text style={{ color: '#6B7280', fontSize: 15, textAlign: 'center' }}>{errorMsg}</Text>
+          <Text style={{ color: '#6B7280', fontSize: 15, textAlign: 'center', lineHeight: 22 }}>{errorMsg}</Text>
           <TouchableOpacity
             style={{ backgroundColor: '#F5C518', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' }}
-            onPress={() => setScanState('idle')}
+            onPress={() => { setScanState('idle'); setShowCamera(true) }}
           >
-            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '800' }}>Subukan Ulit</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '800' }}>📷 Kumuha ng Bagong Litrato</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ backgroundColor: '#fff', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB' }}
+            onPress={() => { setScanState('idle'); handleGalleryPick() }}
+          >
+            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '600' }}>🖼️ Pumili mula sa Gallery</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{ backgroundColor: '#E5E7EB', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' }}
             onPress={() => setTab('manual')}
           >
-            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '600' }}>Manual Input na lang</Text>
+            <Text style={{ color: '#1C2B3A', fontSize: 16, fontWeight: '600' }}>✏️ Manual Input na lang</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -109,7 +140,8 @@ export default function ScannerScreen() {
           extracted={extracted}
           onExtractedChange={setExtracted}
           onConfirm={handleConfirm}
-          onRescan={() => setScanState('idle')}
+          onRescan={() => { setScanState('idle'); setExtracted({}); setShowCamera(true) }}
+
         />
       </View>
     )
@@ -244,6 +276,20 @@ function ScanTab({ onOpenCamera, onGalleryPick }: { onOpenCamera: () => void; on
         </View>
       </TouchableOpacity>
 
+      {/* Privacy notice */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#F0FDF4', borderRadius: 12,
+        paddingHorizontal: 14, paddingVertical: 10, marginTop: 14,
+        borderWidth: 1, borderColor: '#BBF7D0',
+      }}>
+        <Text style={{ fontSize: 16 }}>🔒</Text>
+        <Text style={{ flex: 1, color: '#166534', fontSize: 11, lineHeight: 16 }}>
+          <Text style={{ fontWeight: '700' }}>Billing numbers lang ang kinukuha.</Text>
+          {' '}Ang iyong pangalan, account number, at address ay hindi namin binabasa o sine-save.
+        </Text>
+      </View>
+
       {/* KoKo peeking above the analyze button */}
       <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', width: '100%', marginBottom: -2 }}>
@@ -283,20 +329,13 @@ function CameraModal({
   const [permission, requestPermission] = useCameraPermissions()
   const [capturing, setCapturing] = useState(false)
   const [facing, setFacing] = useState<'back' | 'front'>('back')
-  const [flash, setFlash] = useState<'off' | 'on' | 'auto'>('auto')
+  const [torchOn, setTorchOn] = useState(false)
   const [preview, setPreview] = useState<{ uri: string; base64: string } | null>(null)
   const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null)
   const focusScale = useRef(new Animated.Value(1.4)).current
   const focusOpacity = useRef(new Animated.Value(0)).current
   const cameraRef = useRef<CameraView>(null)
   const insets = useSafeAreaInsets()
-
-  const flashLabel = flash === 'on' ? 'ON' : flash === 'auto' ? 'AUTO' : 'OFF'
-  const flashActive = flash !== 'off'
-
-  function cycleFlash() {
-    setFlash(f => f === 'auto' ? 'on' : f === 'on' ? 'off' : 'auto')
-  }
 
   function handleTapFocus(evt: { nativeEvent: { locationX: number; locationY: number } }) {
     const { locationX: x, locationY: y } = evt.nativeEvent
@@ -433,7 +472,7 @@ function CameraModal({
   return (
     <Modal visible={visible} animationType="slide" statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#000' }}>
-        <CameraView ref={cameraRef} style={{ flex: 1 }} facing={facing} flash={flash}>
+        <CameraView ref={cameraRef} style={{ flex: 1 }} facing={facing} enableTorch={torchOn}>
 
           {/* Tap-to-focus overlay */}
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={handleTapFocus}>
@@ -500,17 +539,35 @@ function CameraModal({
           {/* Alignment frame */}
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ width: '85%', aspectRatio: 0.7, position: 'relative' }}>
+
+              {/* Dark overlay outside frame — makes the cutout pop */}
+              <View style={{ position: 'absolute', top: -2, left: -2, right: -2, bottom: -2, borderRadius: 4, borderWidth: 2000, borderColor: 'rgba(0,0,0,0.45)' }} pointerEvents="none" />
+
+              {/* Corner brackets — bigger, thicker, with glow */}
               {[
-                { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 },
-                { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
-                { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
-                { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
+                { top: 0, left: 0, borderTopWidth: 5, borderLeftWidth: 5 },
+                { top: 0, right: 0, borderTopWidth: 5, borderRightWidth: 5 },
+                { bottom: 0, left: 0, borderBottomWidth: 5, borderLeftWidth: 5 },
+                { bottom: 0, right: 0, borderBottomWidth: 5, borderRightWidth: 5 },
               ].map((s, i) => (
-                <View key={i} style={{ position: 'absolute', width: 28, height: 28, borderColor: '#F5C518', ...s }} />
+                <View key={i} style={{
+                  position: 'absolute', width: 48, height: 48,
+                  borderColor: '#F5C518',
+                  shadowColor: '#F5C518', shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 },
+                  elevation: 8,
+                  ...s,
+                }} />
               ))}
+
+              {/* Subtle edge lines connecting corners */}
+              <View style={{ position: 'absolute', top: 0, left: 48, right: 48, height: 1.5, backgroundColor: 'rgba(245,197,24,0.35)' }} />
+              <View style={{ position: 'absolute', bottom: 0, left: 48, right: 48, height: 1.5, backgroundColor: 'rgba(245,197,24,0.35)' }} />
+              <View style={{ position: 'absolute', left: 0, top: 48, bottom: 48, width: 1.5, backgroundColor: 'rgba(245,197,24,0.35)' }} />
+              <View style={{ position: 'absolute', right: 0, top: 48, bottom: 48, width: 1.5, backgroundColor: 'rgba(245,197,24,0.35)' }} />
+
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
+                <View style={{ backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: 'rgba(245,197,24,0.4)' }}>
+                  <Text style={{ color: '#F5C518', fontSize: 12, fontWeight: '700', textAlign: 'center', letterSpacing: 0.5 }}>
                     I-align ang bill dito
                   </Text>
                 </View>
@@ -533,24 +590,24 @@ function CameraModal({
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
 
-              {/* Flash toggle */}
-              <TouchableOpacity onPress={cycleFlash} activeOpacity={0.8} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+              {/* Torch toggle */}
+              <TouchableOpacity onPress={() => setTorchOn(t => !t)} activeOpacity={0.8} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
                 <View style={{
                   width: 44, height: 44, borderRadius: 22,
-                  backgroundColor: flashActive ? 'rgba(245,197,24,0.25)' : 'rgba(255,255,255,0.12)',
+                  backgroundColor: torchOn ? 'rgba(245,197,24,0.25)' : 'rgba(255,255,255,0.12)',
                   borderWidth: 1.5,
-                  borderColor: flashActive ? '#F5C518' : 'rgba(255,255,255,0.2)',
+                  borderColor: torchOn ? '#F5C518' : 'rgba(255,255,255,0.2)',
                   alignItems: 'center', justifyContent: 'center',
                 }}>
                   <FontAwesome6
-                    name={flash === 'off' ? 'bolt-lightning' : 'bolt'}
+                    name="bolt"
                     size={18}
-                    color={flashActive ? '#F5C518' : 'rgba(255,255,255,0.4)'}
+                    color={torchOn ? '#F5C518' : 'rgba(255,255,255,0.4)'}
                     solid
                   />
                 </View>
-                <Text style={{ color: flashActive ? '#F5C518' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
-                  {flashLabel}
+                <Text style={{ color: torchOn ? '#F5C518' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>
+                  {torchOn ? 'ON' : 'OFF'}
                 </Text>
               </TouchableOpacity>
 
@@ -589,18 +646,48 @@ function ManualTab({ onDone }: { onDone: (input: Partial<BillInput>) => void }) 
   const [totalAmount, setTotalAmount] = useState('')
   const [kwh, setKwh] = useState('')
   const [city, setCity] = useState('')
-  const [barangay, setBarangay] = useState('')
-  const [isSubMeter, setIsSubMeter] = useState(false)
-  const [cityOpen, setCityOpen] = useState(false)
+  const [billingMonth, setBillingMonth] = useState('')
+  const [ratePerKwh, setRatePerKwh] = useState('')
+  const [generationCharge, setGenerationCharge] = useState('')
+  const [transmissionCharge, setTransmissionCharge] = useState('')
+  const [systemLossCharge, setSystemLossCharge] = useState('')
+  const [distributionCharge, setDistributionCharge] = useState('')
+  const [universalCharges, setUniversalCharges] = useState('')
+  const [fitAll, setFitAll] = useState('')
+  const [subsidies, setSubsidies] = useState('')
+  const [taxes, setTaxes] = useState('')
+
+  const fieldStyle = {
+    backgroundColor: '#fff', borderRadius: 14,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontSize: 16, color: '#1C2B3A', marginBottom: 16,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+  } as const
+
+  const num = (v: string) => { const n = parseFloat(v); return isNaN(n) ? undefined : n }
 
   function handleSubmit() {
     const amount = parseFloat(totalAmount)
     const kwhNum = parseFloat(kwh)
     if (isNaN(amount) || isNaN(kwhNum) || amount <= 0 || kwhNum <= 0) {
-      Alert.alert('Mali ang input', 'Siguraduhing tama ang mga numero.')
+      Alert.alert('Mali ang input', 'Kailangan ang Total Amount at kWh bago magpatuloy.')
       return
     }
-    onDone({ totalAmount: amount, kwh: kwhNum, city })
+    onDone({
+      totalAmount: amount,
+      kwh: kwhNum,
+      city: city || undefined,
+      billingMonth: billingMonth || undefined,
+      ratePerKwh: num(ratePerKwh),
+      generationCharge: num(generationCharge),
+      transmissionCharge: num(transmissionCharge),
+      systemLossCharge: num(systemLossCharge),
+      distributionCharge: num(distributionCharge),
+      universalCharges: num(universalCharges),
+      fitAll: num(fitAll),
+      subsidies: num(subsidies),
+      taxes: num(taxes),
+    })
   }
 
   return (
@@ -613,77 +700,59 @@ function ManualTab({ onDone }: { onDone: (input: Partial<BillInput>) => void }) 
         o kaya naman, i-type mismo ang halaga
       </Text>
 
-      {/* Total bill */}
-      <FormField label="Kabuuang halaga ng bill" hint="?" />
-      <TextInput
-        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
-        placeholder="₱ 0.00"
-        placeholderTextColor="#D1D5DB"
-        keyboardType="decimal-pad"
-        value={totalAmount}
-        onChangeText={setTotalAmount}
-      />
+      {/* ── Required fields ── */}
+      <SectionLabel label="Pangunahing Impormasyon" />
 
-      <FormField label="Kiloawatts na nagamit (kWh)" hint="?" />
-      <TextInput
-        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
-        placeholder="0"
-        placeholderTextColor="#D1D5DB"
-        keyboardType="number-pad"
-        value={kwh}
-        onChangeText={setKwh}
-      />
+      <FormField label="Charges for this Billing Period (₱)" hint="?" />
+      <TextInput style={fieldStyle} placeholder="₱ 0.00" placeholderTextColor="#D1D5DB"
+        keyboardType="decimal-pad" inputMode="decimal" value={totalAmount} onChangeText={setTotalAmount} />
 
-      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>Lungsod</Text>
-      <TextInput
-        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: '#1C2B3A', marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
-        placeholder="Caloocan, Quezon City..."
-        placeholderTextColor="#D1D5DB"
-        value={city}
-        onChangeText={setCity}
-      />
+      <FormField label="kWh Consumed" hint="?" />
+      <TextInput style={fieldStyle} placeholder="0" placeholderTextColor="#D1D5DB"
+        keyboardType="number-pad" value={kwh} onChangeText={setKwh} />
 
-      <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: 8 }}>Barangay</Text>
-      <TouchableOpacity
-        onPress={() => setCityOpen(!cityOpen)}
-        style={{ backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
-      >
-        <Text style={{ color: barangay ? '#1C2B3A' : '#D1D5DB', fontSize: 16 }}>
-          {barangay || 'Piliin ang barangay...'}
-        </Text>
-        <Text style={{ color: '#9CA3AF' }}>{cityOpen ? '▲' : '▼'}</Text>
-      </TouchableOpacity>
+      <FormField label="Rate per kWh (₱)" hint="?" />
+      <TextInput style={fieldStyle} placeholder="₱ 0.0000" placeholderTextColor="#D1D5DB"
+        keyboardType="decimal-pad" inputMode="decimal" value={ratePerKwh} onChangeText={setRatePerKwh} />
 
-      {/* Sub-meter checkbox */}
-      <TouchableOpacity
-        onPress={() => setIsSubMeter(!isSubMeter)}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 }}
-        activeOpacity={0.8}
-      >
-        <View style={{
-          width: 22, height: 22, borderRadius: 4, borderWidth: 2,
-          borderColor: isSubMeter ? '#F5C518' : '#D1D5DB',
-          backgroundColor: isSubMeter ? '#F5C518' : '#fff',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          {isSubMeter && <Text style={{ color: '#1C2B3A', fontSize: 14, fontWeight: '900' }}>✓</Text>}
+      <FormField label="Lungsod / Bayan" />
+      <TextInput style={fieldStyle} placeholder="Caloocan, Quezon City..." placeholderTextColor="#D1D5DB"
+        value={city} onChangeText={setCity} autoCapitalize="words" />
+
+      <FormField label="Billing Month" />
+      <TextInput style={fieldStyle} placeholder="hal. May 2026" placeholderTextColor="#D1D5DB"
+        value={billingMonth} onChangeText={setBillingMonth} />
+
+      {/* ── Charge breakdown ── */}
+      <SectionLabel label="Breakdown ng Charges" optional />
+      <Text style={{ color: '#9CA3AF', fontSize: 12, marginBottom: 12, marginTop: -4 }}>
+        Opsyonal — para sa mas detalyadong analysis
+      </Text>
+
+      {[
+        { label: 'Generation Charge (₱)',    value: generationCharge,    set: setGenerationCharge },
+        { label: 'Transmission Charge (₱)',  value: transmissionCharge,  set: setTransmissionCharge },
+        { label: 'System Loss Charge (₱)',   value: systemLossCharge,    set: setSystemLossCharge },
+        { label: 'Distribution Charge (₱)',  value: distributionCharge,  set: setDistributionCharge },
+        { label: 'Universal Charges (₱)',    value: universalCharges,    set: setUniversalCharges },
+        { label: 'FiT-All / Renewable (₱)', value: fitAll,              set: setFitAll },
+        { label: 'Subsidies (₱)',            value: subsidies,           set: setSubsidies },
+        { label: 'Government Taxes / VAT (₱)', value: taxes,            set: setTaxes },
+      ].map(({ label, value, set }) => (
+        <View key={label}>
+          <FormField label={label} />
+          <TextInput style={fieldStyle} placeholder="Opsyonal" placeholderTextColor="#D1D5DB"
+            keyboardType="decimal-pad" inputMode="decimal" value={value} onChangeText={set} />
         </View>
-        <Text style={{ color: '#1C2B3A', fontSize: 14, fontWeight: '500' }}>Sub-meter ba ang gamit mo?</Text>
-      </TouchableOpacity>
+      ))}
 
-      {/* KoKo with speech bubble */}
+      {/* KoKo speech bubble */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 16 }}>
-        <Image
-          source={require('@/assets/KuryenteKo/figures/OwlWaving.png')}
-          style={{ width: 56, height: 56 }}
-          resizeMode="contain"
-        />
-        <View style={{
-          flex: 1, backgroundColor: '#F5C518', borderRadius: 12,
-          borderBottomLeftRadius: 4, padding: 10, marginLeft: 10,
-        }}>
+        <Image source={require('@/assets/KuryenteKo/figures/OwlWaving.png')}
+          style={{ width: 56, height: 56 }} resizeMode="contain" />
+        <View style={{ flex: 1, backgroundColor: '#F5C518', borderRadius: 12, borderBottomLeftRadius: 4, padding: 10, marginLeft: 10 }}>
           <Text style={{ color: '#1C2B3A', fontSize: 12, fontWeight: '600' }}>
-            Siguraduhing tama ang mga numero para sa mas accurate na analysis!
+            Mas maraming charges na nai-input = mas accurate ang analysis ng KuryenteKo!
           </Text>
         </View>
       </View>
@@ -758,7 +827,7 @@ function ConfirmScreen({
         hint="Huwag ilagay ang 'Total Amount Due' — ang 'Current Charges' lang"
         value={extracted.totalAmount?.toString() ?? ''}
         keyboardType="decimal-pad"
-        onChange={(v) => onExtractedChange({ ...extracted, totalAmount: parseFloat(v) || 0 })}
+        onChange={(v) => onExtractedChange({ ...extracted, totalAmount: parseFloat(v) || undefined })}
         highlight
       />
 
@@ -767,7 +836,7 @@ function ConfirmScreen({
         label="kWh Consumed"
         value={extracted.kwh?.toString() ?? ''}
         keyboardType="number-pad"
-        onChange={(v) => onExtractedChange({ ...extracted, kwh: parseFloat(v) || 0 })}
+        onChange={(v) => onExtractedChange({ ...extracted, kwh: parseFloat(v) || undefined })}
         highlight
       />
 
@@ -848,6 +917,17 @@ function ConfirmInputField({ label, hint, value, keyboardType, onChange, highlig
   onChange: (v: string) => void
   highlight?: boolean
 }) {
+  // Local state so the user can type freely (decimals mid-type, empty field, etc.)
+  // without the parent's parseFloat conversion resetting the display value.
+  const [local, setLocal] = useState(value)
+
+  function handleChange(text: string) {
+    setLocal(text)
+    onChange(text)
+  }
+
+  const hasValue = local.trim().length > 0 && local !== '0'
+
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ color: '#1C2B3A', fontWeight: '700', fontSize: 14, marginBottom: hint ? 3 : 8 }}>{label}</Text>
@@ -861,11 +941,12 @@ function ConfirmInputField({ label, hint, value, keyboardType, onChange, highlig
           fontSize: 16,
           color: '#1C2B3A',
           borderWidth: 2,
-          borderColor: highlight && value ? '#F5C518' : '#E5E7EB',
+          borderColor: highlight && hasValue ? '#F5C518' : '#E5E7EB',
         }}
-        value={value}
-        onChangeText={onChange}
+        value={local}
+        onChangeText={handleChange}
         keyboardType={keyboardType ?? 'default'}
+        inputMode={keyboardType === 'decimal-pad' ? 'decimal' : keyboardType === 'number-pad' ? 'numeric' : 'text'}
         placeholder={highlight ? 'Kailangan' : 'Opsyonal'}
         placeholderTextColor="#D1D5DB"
       />
